@@ -5,7 +5,7 @@ import pandas as pd
 from torch import nn
 
 from lightning import LightningModule
-from code.StandardScaledDataset import StandardScaledDataset
+from src.StandardScaledDataset import StandardScaledDataset
 
 class RegressionTunableModel(LightningModule):
     def __init__(self, config):
