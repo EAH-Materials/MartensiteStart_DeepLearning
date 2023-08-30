@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     previous_value = 0
 
-    restored_model = RegressionTunableModel.load_from_checkpoint("checkpoint/checkpoint").eval()
+    restored_model = RegressionTunableModel.load_from_checkpoint("src/checkpoint/checkpoint").eval()
 
     st.write("Input in wt %. Upper limit represents the upper limits within the training data.")
     col1, col2, col3 = st.columns(3)
