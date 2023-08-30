@@ -32,16 +32,16 @@ class RegressionTunableModel(LightningModule):
 
     def forward(self, x):
         return self.encoder(x)
+    
+@st.cache_resource
+def load_model():
+    return RegressionTunableModel.load_from_checkpoint("src/checkpoint/checkpoint").cpu().eval() 
 
 if __name__ == "__main__": 
     st.image("imgs/eah_logo.jpg", width=400)
     st.title("Predicting the Martensite Start Temperature for Steel Alloys")
     st.write("Disclaimer: The results from this tool are estimates based on data consisting of a set of experimental measurements. All results are provided for informational purposes only, in furtherance of the developers' educational mission, to complement the knowledge of materials scientists and engineers, and assist them in their search for new materials with desired properties. The developers may not be held responsible for any decisions based on this tool.")
     full_dataset = StandardScaledDataset()
-
-    previous_value = 0
-
-    restored_model = RegressionTunableModel.load_from_checkpoint("src/checkpoint/checkpoint").eval()
 
     st.write("Input in wt %. Upper limit represents the upper limits within the training data.")
     col1, col2, col3 = st.columns(3)
@@ -64,14 +64,16 @@ if __name__ == "__main__":
         cu = st.slider('Copper (Cu)', 0., 3.04, 0.)
         nb = st.slider('Niobium (Nb)', 0., 1.98, 0.)
         ti = st.slider('Titanium (Ti)', 0., 2.52, 0.)
-        b = st.slider('Boron (B)', 0., 0.004, 0., 0.001)
+        b = st.slider('Boron (B, max=0.004)', 0., 0.004, 0., 0.001)
         n = st.slider('Nitrogen (N)', 0., 2.65, 0.)
 
     target = pd.DataFrame([c, mn, si, cr, ni, mo, v, co, al, w, cu, nb, ti, b, n], index=full_dataset.data_columns).transpose()
     full_dataset.scale_data_columns(target)
-    target = torch.FloatTensor(target.values).cuda()
+    target = torch.FloatTensor(target.values)
 
-    prediction = restored_model(target)
+    restored_model = load_model()    
+    with torch.no_grad():
+        prediction = restored_model(target)
 
     prediction = full_dataset.rescale_target(prediction).item()
 
@@ -83,7 +85,8 @@ if __name__ == "__main__":
 
     _, col4, _ = st.columns(3)
     with col4:
-        st.metric("MsT", f"{prediction:5.2f} K", delta=delta, label_visibility="hidden")
+        st.metric("MsT", f"{prediction:5.2f} K", delta=f"{delta:5.2f} K", label_visibility="hidden")
+        st.write("compared to previous calculation")
 
     st.session_state.previous_value = prediction
 

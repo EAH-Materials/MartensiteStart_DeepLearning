@@ -41,7 +41,8 @@ if __name__ == "__main__":
     full_dataset.scale_data_columns(target)
     target = torch.FloatTensor(target.values).cuda()
 
-    prediction = restored_model(target)
+    with torch.no_grad():
+        prediction = restored_model(target)
 
     rescaled_prediction = full_dataset.rescale_target(prediction)
     print(rescaled_prediction)
