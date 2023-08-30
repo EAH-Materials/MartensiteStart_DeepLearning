@@ -35,7 +35,7 @@ class RegressionTunableModel(LightningModule):
     
 @st.cache_resource
 def load_model():
-    return RegressionTunableModel.load_from_checkpoint("src/checkpoint/checkpoint").cpu().eval() 
+    return RegressionTunableModel.load_from_checkpoint("src/checkpoint/checkpoint", map_location=torch.device('cpu')).cpu().eval() 
 
 if __name__ == "__main__": 
     st.image("imgs/eah_logo.jpg", width=400)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         cu = st.slider('Copper (Cu)', 0., 3.04, 0.)
         nb = st.slider('Niobium (Nb)', 0., 1.98, 0.)
         ti = st.slider('Titanium (Ti)', 0., 2.52, 0.)
-        b = st.slider('Boron (B, max=0.004)', 0., 0.004, 0., 0.001)
+        b = st.slider('Boron (B)', 0., 0.004, 0., 0.001, format="%5.3f")
         n = st.slider('Nitrogen (N)', 0., 2.65, 0.)
 
     target = pd.DataFrame([c, mn, si, cr, ni, mo, v, co, al, w, cu, nb, ti, b, n], index=full_dataset.data_columns).transpose()
