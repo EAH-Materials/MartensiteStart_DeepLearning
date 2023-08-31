@@ -1,47 +1,16 @@
 import streamlit as st
 import torch
-import pandas as pd
 
-from torch import nn
-
-from lightning import LightningModule
-from src.StandardScaledDataset import StandardScaledDataset
-
-class RegressionTunableModel(LightningModule):
-    def __init__(self, config):
-        super().__init__()
-        
-        last_out_size = config["layer1_output"]
-        self.encoder = nn.Sequential(
-            nn.Linear(config["input_shape"], last_out_size), 
-            nn.LeakyReLU(),
-        )
-
-        dropout = config["layer1_dropout"]
-        self.encoder.append(nn.Dropout(dropout))
-
-        for layer_index in range(2, int(config["layer_count"])+1):
-            next_out_size = config[f"layer{layer_index}_output"]
-            self.encoder.append(nn.Linear(last_out_size, next_out_size))
-            self.encoder.append(nn.LeakyReLU())
-            dropout = config[f"layer{layer_index}_dropout"]
-            self.encoder.append(nn.Dropout(dropout))
-            last_out_size = next_out_size
-
-        self.encoder.append(nn.Linear(last_out_size, 1))
-
-    def forward(self, x):
-        return self.encoder(x)
+from src.DeployModel import DeployModel
     
 @st.cache_resource
 def load_model():
-    return RegressionTunableModel.load_from_checkpoint("src/checkpoint/checkpoint", map_location=torch.device('cpu')).cpu().eval() 
+    return DeployModel.load_from_checkpoint("src/checkpoint/checkpoint", map_location=torch.device('cpu'))
 
 if __name__ == "__main__": 
     st.image("imgs/eah_logo.jpg", width=400)
     st.title("Predicting the Martensite Start Temperature for Steel Alloys")
     st.write("Disclaimer: The results from this tool are estimates based on data consisting of a set of experimental measurements. All results are provided for informational purposes only, in furtherance of the developers' educational mission, to complement the knowledge of materials scientists and engineers, and assist them in their search for new materials with desired properties. The developers may not be held responsible for any decisions based on this tool.")
-    full_dataset = StandardScaledDataset()
 
     st.write("Input in wt %. Upper limit represents the upper limits within the training data.")
     col1, col2, col3 = st.columns(3)
@@ -67,19 +36,12 @@ if __name__ == "__main__":
         b = st.slider('Boron (B)', 0., 0.004, 0., 0.001, format="%5.3f")
         n = st.slider('Nitrogen (N)', 0., 2.65, 0.)
 
-    target = pd.DataFrame([c, mn, si, cr, ni, mo, v, co, al, w, cu, nb, ti, b, n], index=full_dataset.data_columns).transpose()
-    full_dataset.scale_data_columns(target)
-    target = torch.FloatTensor(target.values)
-
-    restored_model = load_model()    
-    with torch.no_grad():
-        prediction = restored_model(target)
-
-    prediction = full_dataset.rescale_target(prediction).item()
-
+    model = load_model()
+    prediction = model.inference_vector([c, mn, si, cr, ni, mo, v, co, al, w, cu, nb, ti, b, n])
+    
     delta = 0
     if "previous_value" in st.session_state:
-        delta = st.session_state.previous_value - prediction
+        delta = prediction - st.session_state.previous_value
 
     st.subheader("Martensite Start Temperature:")
 
@@ -92,4 +54,4 @@ if __name__ == "__main__":
 
     st.subheader("Acknowledgements: ")
     st.subheader("Details on the used Deep Learning Model can be found in Paper: TODO")
-    st.write("Impressum")
+    st.write("Impressum: Work in Progress")
