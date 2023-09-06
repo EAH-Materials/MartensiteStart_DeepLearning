@@ -8,9 +8,9 @@ def load_model():
     return DeployModel.load_from_checkpoint("src/checkpoint/checkpoint", map_location=torch.device('cpu'))
 
 if __name__ == "__main__": 
-    st.image("imgs/eah_logo.jpg", width=400)
-    st.title("Predicting the Martensite Start Temperature for Steel Alloys")
-    st.write("Disclaimer: The results from this tool are estimates based on data consisting of a set of experimental measurements. All results are provided for informational purposes only, in furtherance of the developers' educational mission, to complement the knowledge of materials scientists and engineers, and assist them in their search for new materials with desired properties. The developers may not be held responsible for any decisions based on this tool.")
+    st.image("imgs/eah_logo.jpg", width=300)
+    st.title("Predicting the Martensite Start Temperature for Steels")
+    st.write("Disclaimer: The developers may not be held responsible for any decisions based on this tool. The model and results are provided for informational and educational purpose only, to assist in the search for new materials with desired properties. The provided tool estimates the results based on publicy available data from a set of experimental measurements.")
 
     st.write("Input in wt %. Upper limit represents the upper limits within the training data.")
     col1, col2, col3 = st.columns(3)
@@ -38,19 +38,24 @@ if __name__ == "__main__":
 
     model = load_model()
     prediction = model.inference_vector([c, mn, si, cr, ni, mo, v, co, al, w, cu, nb, ti, b, n])
-    
-    delta = 0
-    if "previous_value" in st.session_state:
-        delta = prediction - st.session_state.previous_value
 
     st.subheader("Martensite Start Temperature:")
+    
+    if prediction <= 0:
+        st.write("The model prediction is very inaccuarate for this alloy (prediction resulted in value below 0 K). Please try a different alloy.")
+    else:
+        
+        delta = 0
+        if "previous_value" in st.session_state:
+            delta = prediction - st.session_state.previous_value
 
-    _, col4, _ = st.columns(3)
-    with col4:
-        st.metric("MsT", f"{prediction:5.2f} K", delta=f"{delta:5.2f} K", label_visibility="hidden")
-        st.write("compared to previous calculation")
 
-    st.session_state.previous_value = prediction
+        col4, _ = st.columns(2)
+        with col4:
+            st.metric("MsT", f"{prediction:5.2f} K / {(prediction-273.15):5.2f} °C", delta=f"{delta:5.2f} K/°C", label_visibility="hidden")
+            st.write("compared to previous calculation")
+
+        st.session_state.previous_value = prediction
 
     st.subheader("Acknowledgements: ")
     st.subheader("Details on the used Deep Learning Model can be found in Paper: TODO")
