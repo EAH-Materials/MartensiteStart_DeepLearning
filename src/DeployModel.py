@@ -46,6 +46,7 @@ class DeployModel(LightningModule):
 
         self.target_mean = 587.6420457809462
         self.target_std = 107.61116120718675
+        self.order = ["C","Mn","Si","Cr","Ni","Mo","V","Co","Al","W","Cu","Nb","Ti","B","N"]
 
     # Building the model based on Checkpoint
     def define_model(self, config):
