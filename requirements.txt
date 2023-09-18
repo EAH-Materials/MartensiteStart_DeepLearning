@@ -3,3 +3,4 @@ torch==2.0.1
 lightning==2.0.5
 pycalphad==0.10.2
 plotly==5.16.1
+scikit-learn== 1.3.0
