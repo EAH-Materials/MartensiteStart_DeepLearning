@@ -199,6 +199,6 @@ if __name__ == "__main__":
     with data_tab:
         st.dataframe(data, use_container_width=True)
 
-    st.subheader("Acknowledgements: ")
+    st.subheader("Acknowledgements: The SteelDesAIn project is funded by the Carl Zeiss Foundation.")
     st.subheader("Details on the used Deep Learning Model can be found in Paper: TODO")
     st.write("Impressum: Work in Progress")
