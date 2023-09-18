@@ -4,6 +4,8 @@ import os
 import pandas as pd
 import sklearn
 
+from matplotlib import pyplot as plt
+
 from src.DeployModel import DeployModel
 from src.utilities_steel import Ms_Ingber
 from src.MS_Pycalphad import ms_Calphad
@@ -24,7 +26,6 @@ def load_data():
 #@st.cache_resource
 def load_lof():
     return LofMs(df_data=load_data()) 
-
 
 
 def get_inputs(element):
@@ -70,6 +71,40 @@ def get_inputs(element):
     }
     return vec, dic
 
+def plot_lof_space(lof_space,sample_value):
+    st.subheader("Data Sample representation:")
+    col1, col2 = st.columns(2)
+    with col1:
+        fig= plt.figure(figsize=(8,4))
+        ax = fig.add_subplot(111)
+        box = plt.boxplot(lof_space,
+                    vert=False,
+                    #showfliers=False,
+                    flierprops=dict(markerfacecolor='black', marker='x'),
+                    whis=1.5,
+                    patch_artist = True,
+                    boxprops = dict(facecolor = "lightblue")
+        )
+
+        space = (0.9,1.1)
+        plt.ylim(space)
+        plt.grid()
+        plt.plot([sample_value,sample_value],[space[0],space[1]],'--',color='r',linewidth=0.8)
+        plt.xlabel('LOF')
+        ax.axes.get_yaxis().set_visible(False)
+        st.pyplot(fig)
+        
+    with col2:
+        fig= plt.figure(figsize=(8,4))
+        ax = fig.add_subplot(111)
+
+        y, _, _ = plt.hist(lof_space,color = "black",bins=150, histtype='step')
+        y, _, _ = plt.hist(lof_space,color = "lightblue",bins=150)
+        plt.plot([sample_value,sample_value],[0,max(y)],'--',color='r',linewidth=0.8)
+        plt.grid()
+        plt.xlabel('LOF')
+        ax.axes.get_yaxis().set_visible(False)
+        st.pyplot(fig) 
 
 def print_result(predictions):
     def __print_func__(value, suffix, head):
@@ -104,12 +139,13 @@ def print_result(predictions):
         delta = 0
         if f"previous_value_LOF" in st.session_state:
             delta = predictions[3] - st.session_state[f"previous_value_LOF"]
-        st.write("**" + "Local Outlier Factor" + "**")
+        st.write("**" + "Local Outlier Factor:" + "**")
         st.metric(
             f"LOF",
             f"{predictions[3]:5.2f}",
             delta=f"{delta:5.2f} ",
             label_visibility="hidden",
+            delta_color="inverse",
         )
         st.write("compared to previous calculation")
         st.session_state[f"previous_value_LOF"] = predictions[3]
@@ -183,6 +219,8 @@ if __name__ == "__main__":
         Lof_S = lof.score_samples(composition_vec)[0]
         
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
+        
+        plot_lof_space(lof_space = lof.dataset_lof(),sample_value=lof.score_samples(composition_vec))
 
     with range_tab:
         fig = None
