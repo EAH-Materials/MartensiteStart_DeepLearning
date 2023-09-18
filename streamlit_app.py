@@ -73,11 +73,10 @@ def get_inputs(element):
 
 def plot_lof_space(lof_space,sample_value):
     st.subheader("Data Sample representation:")
-    col1, col2 = st.columns(2)
-    with col1:
-        fig= plt.figure(figsize=(8,4))
-        ax = fig.add_subplot(111)
-        box = plt.boxplot(lof_space,
+    
+    fig, ax = plt.subplots(1, 2,figsize=(12,3))
+    
+    ax[0].boxplot(lof_space,
                     vert=False,
                     #showfliers=False,
                     flierprops=dict(markerfacecolor='black', marker='x'),
@@ -85,26 +84,22 @@ def plot_lof_space(lof_space,sample_value):
                     patch_artist = True,
                     boxprops = dict(facecolor = "lightblue")
         )
+    space = (0.9,1.1)
+    ax[0].set_ylim(space)
+    ax[0].plot([sample_value,sample_value],[space[0],space[1]],'--',color='r',linewidth=0.8)
+    ax[0].axes.get_yaxis().set_visible(False)
+    ax[0].grid()
+    ax[0].set_xlabel('LOF')
 
-        space = (0.9,1.1)
-        plt.ylim(space)
-        plt.grid()
-        plt.plot([sample_value,sample_value],[space[0],space[1]],'--',color='r',linewidth=0.8)
-        plt.xlabel('LOF')
-        ax.axes.get_yaxis().set_visible(False)
-        st.pyplot(fig)
-        
-    with col2:
-        fig= plt.figure(figsize=(8,4))
-        ax = fig.add_subplot(111)
+    y, _, _ = ax[1].hist(lof_space,color = "black",bins=150, histtype='step')
+    y, _, _ = ax[1].hist(lof_space,color = "lightblue",bins=150)
+    ax[1].plot([sample_value,sample_value],[0,max(y)],'--',color='r',linewidth=0.8)
+    ax[1].grid()
+    ax[1].set_xlabel('LOF')
+    ax[1].set_ylabel('# of samples')
 
-        y, _, _ = plt.hist(lof_space,color = "black",bins=150, histtype='step')
-        y, _, _ = plt.hist(lof_space,color = "lightblue",bins=150)
-        plt.plot([sample_value,sample_value],[0,max(y)],'--',color='r',linewidth=0.8)
-        plt.grid()
-        plt.xlabel('LOF')
-        ax.axes.get_yaxis().set_visible(False)
-        st.pyplot(fig) 
+    st.pyplot(fig,dpi=300)
+    
 
 def print_result(predictions):
     def __print_func__(value, suffix, head):
@@ -206,7 +201,7 @@ if __name__ == "__main__":
     
     
     with comp_tab:
-        slider_or_numbers = st.toggle("Input with sliders or numeric inputs.")
+        slider_or_numbers = st.toggle("Input with sliders or numeric inputs.",disabled=False)
         if slider_or_numbers:
             composition_vec, composition_dict = get_inputs(st.slider)
         else:
@@ -218,10 +213,15 @@ if __name__ == "__main__":
         Ms_TD = ms_Calphad(**composition_dict, T_guess=Ms_EM)
         Lof_S = lof.score_samples(composition_vec)[0]
         
+        st.write('\n')
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
         
-        plot_lof_space(lof_space = lof.dataset_lof(),sample_value=lof.score_samples(composition_vec))
-
+        st.write('\n')
+        data_sample_representation = st.toggle("Data Sample representation compared to Dataset.",value=True)
+        if data_sample_representation:
+            plot_lof_space(lof_space = lof.dataset_lof(),sample_value=lof.score_samples(composition_vec))
+        
+        
     with range_tab:
         fig = None
         col1, col2 = st.columns(2)
