@@ -2,11 +2,13 @@ import streamlit as st
 import torch
 import os
 import pandas as pd
+import sklearn
 
 from src.DeployModel import DeployModel
 from src.utilities_steel import Ms_Ingber
 from src.MS_Pycalphad import ms_Calphad
 from src.RangeCompute import range_study
+from src.lof_ms import LofMs
 
 
 @st.cache_resource
@@ -15,10 +17,14 @@ def load_model():
         "src/checkpoint/checkpoint", map_location=torch.device("cpu")
     )
 
-
 @st.cache_resource
 def load_data():
     return pd.DataFrame(pd.read_csv(os.path.join("data", "MsDatabase_2022.csv")))
+
+#@st.cache_resource
+def load_lof():
+    return LofMs(df_data=load_data()) 
+
 
 
 def get_inputs(element):
@@ -86,14 +92,27 @@ def print_result(predictions):
             )
 
     st.subheader("Martensite Start Temperatures:")
-    cols_NN, col_EM, col_TD = st.columns(3)
+    cols_NN, col_EM, col_TD, col_LO = st.columns(4)
     with cols_NN:
         __print_func__(predictions[0], "NN", "Neural Network:")
     with col_EM:
         __print_func__(predictions[1], "EM", "Empirical Model:")
     with col_TD:
         __print_func__(predictions[2], "TD", "Thermodynamic Model:")
-
+    with col_LO:
+        #__print_func__(predictions[3], "LO", "LOF:")
+        delta = 0
+        if f"previous_value_LOF" in st.session_state:
+            delta = predictions[3] - st.session_state[f"previous_value_LOF"]
+        st.write("**" + "Local Outlier Factor" + "**")
+        st.metric(
+            f"LOF",
+            f"{predictions[3]:5.2f}",
+            delta=f"{delta:5.2f} ",
+            label_visibility="hidden",
+        )
+        st.write("compared to previous calculation")
+        st.session_state[f"previous_value_LOF"] = predictions[3]
 
 if __name__ == "__main__":
     st.set_page_config(
@@ -146,20 +165,24 @@ if __name__ == "__main__":
     comp_tab, range_tab, data_tab = st.tabs(["Calculator", "Range Calculator", "Data"])
 
     model = load_model()
-    data = load_data()
-
+    data  = load_data()
+    lof   = load_lof()
+    
+    
     with comp_tab:
         slider_or_numbers = st.toggle("Input with sliders or numeric inputs.")
         if slider_or_numbers:
             composition_vec, composition_dict = get_inputs(st.slider)
         else:
             composition_vec, composition_dict = get_inputs(st.number_input)
-
-        Ms_NN = model.inference_vector(composition_vec)
+        
+        composition_vec_trans = composition_vec.copy()
+        Ms_NN = model.inference_vector(composition_vec_trans)
         Ms_EM = Ms_Ingber(**composition_dict)
         Ms_TD = ms_Calphad(**composition_dict, T_guess=Ms_EM)
-
-        print_result([Ms_NN, Ms_EM, Ms_TD])
+        Lof_S = lof.score_samples(composition_vec)[0]
+        
+        print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
 
     with range_tab:
         fig = None
