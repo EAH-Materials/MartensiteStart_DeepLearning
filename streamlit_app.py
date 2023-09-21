@@ -27,6 +27,7 @@ def load_data():
 def load_lof():
     return LofMs(df_data=load_data()) 
 
+disclaimer = "Limitation of liability for website content: The developers may not be held responsible for any decisions based on this tool. The model and results are provided for informational and educational purpose only, to assist in the search for new materials with desired properties. The provided tool estimates the results based on publicy available data from a set of experimental measurements. The contents were created with the greatest possible care and to the best of the developers knowledge. Nevertheless, the accuracy of the content cannot be guaranteed, thus the developers are not accepting liability for topicality, correctness and completeness of the content provided on this website."
 
 def get_inputs(element):
     col1, col2, col3 = st.columns(3)
@@ -186,9 +187,7 @@ if __name__ == "__main__":
     with col3:
         st.image("imgs/Carl-Zeiss-Stiftung_Logo.png", width=150)
     st.title("Predicting the Martensite Start Temperature for Steels")
-    st.write(
-        "Disclaimer: The developers may not be held responsible for any decisions based on this tool. The model and results are provided for informational and educational purpose only, to assist in the search for new materials with desired properties. The provided tool estimates the results based on publicy available data from a set of experimental measurements."
-    )
+    st.write(disclaimer)
 
     st.write(
         "Input in wt %. Upper limit represents the upper limits within the training data."
@@ -260,8 +259,10 @@ if __name__ == "__main__":
     with data_tab:
         st.dataframe(data, use_container_width=True)
 
+    st.subheader("Details on the used Deep Learning Model can be found in Paper: TODO")
     st.subheader("Acknowledgements:")
     st.write("The SteelDesAIn project is funded by the Carl Zeiss Foundation.")
     st.markdown("Contains information from TODO: DATABASE NAME, which is made available here under the <a target='_blank' href='https://opendatacommons.org/licenses/odbl/1-0/'>Open Database License (ODbL)</a>.", unsafe_allow_html=True)
-    st.subheader("Details on the used Deep Learning Model can be found in Paper: TODO")
-    st.write("Impressum: Work in Progress")
+    st.write("This website and the deep learning model are open-source and published under <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE'>GNU GPLv3</a> on GitHub: <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning'>https://github.com/EAH-Materials/MartensiteStart_DeepLearning</a>.", unsafe_allow_html=True)
+    st.write("<a target='_blank' href='https://www.eah-jena.de/impressum'>Impressum</a> (Forwards to the website of the University of Applied Sciences Jena in new tab)", unsafe_allow_html=True)
+    st.write(disclaimer)
