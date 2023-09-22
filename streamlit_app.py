@@ -232,7 +232,19 @@ if __name__ == "__main__":
             e2 = st.selectbox("Element 2", model.order, 1)
             e2_lb = st.number_input("Lower Bound 2", 0.0, None, 0.0)
             e2_ub = st.number_input("Upper Bound 2", 0.0, None, 1.0)
-        comp = st.button("Compute")
+        col3, col4, col5, col6 = st.columns(4)
+        models = []
+        with col3:
+            comp = st.button("Compute")
+        with col4:
+            if(st.checkbox('Neural Network',value=True)):
+                models.append('NN')
+        with col5:
+            if(st.checkbox('Empirical Model')):
+                models.append('EM')
+        with col6:
+            if(st.checkbox('Thermodynamic Model')):
+                models.append('TD')
         if comp:
             fig = None
             with st.spinner("Computing"):
@@ -252,9 +264,10 @@ if __name__ == "__main__":
                         },
                     }
                 ]
-                fig = range_study(study,df=data)
+                fig = range_study(study,df=data,models=models)
         if fig is not None:
             st.plotly_chart(fig, use_container_width=True)
+
 
     with data_tab:
         st.dataframe(data, use_container_width=True)
