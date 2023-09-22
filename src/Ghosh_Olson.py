@@ -1,3 +1,4 @@
+import pickle
 from scipy.interpolate import UnivariateSpline
 from scipy.optimize import newton
 import numpy as np
@@ -39,7 +40,7 @@ class Ms_Ghosh_Olson:
         ax.set_ylabel('G [J]')
         plt.legend(['Calphad','Spline','GO-dG-Critical'])
 
-    def __init__(self, data, composition = None):
+    def __init__(self, data=None, parameters=None, dbf=None):
         """
         Constructor: Initializes the Ms_Ghosh_Olson object with the provided data.
 
@@ -65,9 +66,23 @@ class Ms_Ghosh_Olson:
             "TI": 1473.0,
             "AL": 280.0,
         }
-        self.composition = ', '.join(f"'{key}': {round(val, 2)}" for key, val in composition.items())
-        self._compute_dG_crit(weight_pct2mol(composition))
-        self._compute_spline(data)
+        if parameters is not None:
+            if isinstance(parameters, dict): 
+                self.Parameters = parameters
+            else:
+                assert(len(parameters)==len(self.Parameters))
+                for id, key in enumerate(self.Parameters):
+                    self.Parameters[key] = parameters[id]
+        self.dbf = dbf
+        if data is not None:
+            self._compute_spline(data)
+
+    def load_parameters(self, path, opt_key):
+        with open(path,'rb') as file:
+            data = pickle.load(file)
+        for id, key in enumerate(self.Parameters):
+            self.Parameters[key] = data[opt_key]['x']['x'][id]
+
 
     def _compute_dG_crit(self, composition):
         """
@@ -77,6 +92,7 @@ class Ms_Ghosh_Olson:
         - composition (dict): A dictionary containing the element compositions.
 
         """
+
         Wmui = 0
         Wmuj = 0
         Wmuk = 0
@@ -96,8 +112,11 @@ class Ms_Ghosh_Olson:
                     Wmul += np.sqrt(concentration) * Kmu
 
         self.dG_crit = -(self.Parameters["K1"] + np.sqrt(Wmui) + np.sqrt(Wmuj) + np.sqrt(Wmuk) + Wmul)
-        # print(self.dG_crit)
         
+        if Ms_Ghosh_Olson.b_plot:
+            composition_str = ', '.join(f"'{key}': {round(val, 2)}" for key, val in composition.items())
+            Ms_Ghosh_Olson.ax.set_title(composition_str)
+
     def _compute_spline(self, data):
         """
         Sets the dG data and performs sorting and spline interpolation of dG over T.
@@ -126,7 +145,6 @@ class Ms_Ghosh_Olson:
             Ms_Ghosh_Olson.li2[0].set_ydata([dg_crit, dg_crit])
             Ms_Ghosh_Olson.ax.set_xlim(min(T_rng),max(T_rng))
             Ms_Ghosh_Olson.ax.set_ylim(min(y_rng)-100,max(y_rng)+100)
-            Ms_Ghosh_Olson.ax.set_title(self.composition)
             Ms_Ghosh_Olson.fig.canvas.draw()
             Ms_Ghosh_Olson.fig.canvas.flush_events()
 
@@ -146,17 +164,22 @@ class Ms_Ghosh_Olson:
 
         return delta_crit_DG
 
-    def Ms(self, T_initial=500):
+    def Ms(self, T_initial=500, composition=None, data=None):
         """
         Calculates the martensite start temperature (Ms) for the given composition.
 
         Parameters:
+        - T_initial (float): Initial guess of Ms Temperature
         - composition (dict): A dictionary containing the element compositions.
 
         Returns:
         - Ms (float): Martensite start temperature.
 
         """
+        if data is not None:
+            self._compute_spline(data)
+
+        self._compute_dG_crit(weight_pct2mol(composition, self.dbf))
         try:
             self.T_initial = T_initial
             Ms = newton(self._compute_delta_critical_dG, self.T_initial,fprime=self.E_ath_fr_spline_prime, maxiter=100)
