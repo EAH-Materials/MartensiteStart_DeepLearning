@@ -27,7 +27,7 @@ def load_data():
 def load_lof():
     return LofMs(df_data=load_data()) 
 
-disclaimer = "Limitation of liability for website content: The developers may not be held responsible for any decisions based on this tool. The model and results are provided for informational and educational purpose only, to assist in the search for new materials with desired properties. The provided tool estimates the results based on publicy available data from a set of experimental measurements. The contents were created with the greatest possible care and to the best of the developers knowledge. Nevertheless, the accuracy of the content cannot be guaranteed, thus the developers are not accepting liability for topicality, correctness and completeness of the content provided on this website."
+disclaimer = "Limitation of liability for website content: The developers may not be held responsible for any decisions based on this tool. The model and results are provided for informational and educational purpose only, to assist in the search for new materials with desired properties. The provided tool estimates the results based on publicy available data from a set of experimental measurements. The contents were created with the highest standard of applicable care and to the best of the developers knowledge. Nevertheless, the accuracy of the content cannot be guaranteed, no liability for topicality, correctness and completeness of the content provided on this website can be given."
 
 def get_inputs(element):
     col1, col2, col3 = st.columns(3)
