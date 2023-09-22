@@ -1,15 +1,17 @@
-from copy import copy
 from pycalphad import Database, calculate, variables as v
-from src.utilities_steel import Ms_Ingber, weight_pct2mol, mol2weight_pct
+from src.utilities_steel import Ms_Ingber, weight_pct2mol
 from src.Ghosh_Olson import Ms_Ghosh_Olson
 import numpy as np
 from collections import OrderedDict
 import os
+import warnings
 
+warnings.filterwarnings("ignore", category=UserWarning)
 # Preload database
 dbf = Database(
     os.path.join(os.path.dirname(__file__), "mc_fe_v2.059.pycalphad.tdb")
 )  # Matcalc iron
+warnings.resetwarnings()
 
 def get_point(composition):
     """
@@ -26,7 +28,7 @@ def get_point(composition):
 
     Note:
         This function calculates the site fractions for a specific composition.
-        The 'C' fraction is always included, and the 'Fe' fraction is calculated as the complement to ensure that the total
+        The 'Fe' fraction is calculated as the complement to ensure that the total
         sum of fractions for each combination adds up to 1.0.
     """
 
@@ -36,64 +38,67 @@ def get_point(composition):
     # Sort the elements alphabetically
     sorted_elements = sorted(comp.keys())
 
-    # Create arrays for each element in sorted order (except 'C')
+    # Create arrays for each site in sorted alphabetical order
     site_1 = OrderedDict({})
+    site_2 = OrderedDict({})
     for element in sorted_elements:
-        if element != "C":
+        if element in ["C", "N", "B", "H"]:
+            site_2[element] = comp[element]
+        else:
             site_1[element] = comp[element]
 
-    if "C" in sorted_elements:
-        C = comp["C"]
-    else:
-        C = 0.0
-
     site_1_sum = np.sum(np.stack([site_1[key] for key in site_1], axis=-1), axis=-1)
-    site_fractions = np.zeros((1, len(sorted_elements) + 1))
+    site_2_sum = 1.0 - site_1_sum
+    # site_2_sum = np.sum(np.stack([site_2[key] for key in site_2], axis=-1), axis=-1) if len(site_2) > 0 else 0.0
+    res = {
+        "FCC_A1": np.zeros((1, len(sorted_elements) + 1)),
+        "BCC_A2": np.zeros((1, len(sorted_elements) + 1)),
+    }
 
     ix = 0
     for element in sorted_elements:
-        if element != "C":
-            site_fractions[:, ix] = site_1[element] / site_1_sum
+        if element not in ["C", "N", "B", "H"]:
+            res["FCC_A1"][:, ix] = site_1[element] / site_1_sum
+            res["BCC_A2"][:, ix] = site_1[element] / site_1_sum
             ix += 1
 
-    res = {"FCC_A1": copy(site_fractions), "BCC_A2": copy(site_fractions)}
-    res["FCC_A1"][:, ix] = C
-    res["FCC_A1"][:, ix + 1] = 1.0 - res["FCC_A1"][:, ix]
-    res["BCC_A2"][:, ix] = C / 3.0
-    res["BCC_A2"][:, ix + 1] = 1.0 - res["BCC_A2"][:, ix]
+    site_2_sum_r = (1-site_2_sum)
+    if site_2_sum > 0.0:
+        for element in sorted_elements:
+            if element in ["C", "N", "B", "H"]:
+                res["FCC_A1"][:, ix] = site_2[element] / site_2_sum_r
+                res["BCC_A2"][:, ix] = (site_2[element] / site_2_sum_r) / 3.0
+                ix += 1
 
+    res["FCC_A1"][:, ix] = 1.0 - site_2_sum
+    res["BCC_A2"][:, ix] = 1.0 - (site_2_sum / 3.0)
     return res
+
 
 def ms_Calphad(T_guess=None, **kwargs):
     inputs = {k.upper(): v for k, v in kwargs.items()}
-    C = inputs.get("C", 0.0)
 
-    comps = ["FE", "C", "VA"]  # Elements to consider ('VA'=Vacancies)
+    comps = ["FE", "VA"]  # Elements to consider ('VA'=Vacancies)
     drop = []
     for e, va in inputs.items():
-        if e != "C":
-            if va > 0.0:
-                comps.append(e)
-            else:
-                drop.append(e)
+        if va > 0.0:
+            comps.append(e)
+        else:
+            drop.append(e)
     for e in drop:
         inputs.pop(e)
 
     phases = ["FCC_A1", "BCC_A2"]  # Austenite and Martensite phases
-    
+
     Ts = np.linspace(273.15, 1400, 16)  # Temperature range and sampling for finding Ms.
     # This sampling can be rather coarse, since the Gibbs energies
     # give continuous, smooth curves over T and easily be interpolated later
 
     # Compute the 'points'-array, specific to pycalphad-convention and compute the Gibbs energies
-    site_fractions = get_point(
-        inputs
-    )
+    site_fractions = get_point(inputs)
 
     # Compute Gibbs energies at ambient pressure
-    td_res = calculate(
-        dbf, comps, phases, T=Ts, P=101325, points=site_fractions
-    )
+    td_res = calculate(dbf, comps, phases, T=Ts, P=101325, points=site_fractions)
 
     # Get deltaG - the point where dG is zero marks the equilibrium condition (i.e. Austenite and Martensite are thermodynamically equally probable)
     dG = (
@@ -103,15 +108,17 @@ def ms_Calphad(T_guess=None, **kwargs):
 
     # Use the Ghosh-Olsen model to compute the energy needed to initiate phase transition. This shifts the dG-curve accordingly
     # and the root of this shifted curve defines the Ms-temperature. Initializing Ms_Ghosh_Olson computes
-    # the critical dG and a spline interpolation of the dG-over-T curve
-    ms_GO = Ms_Ghosh_Olson(
-        {"T": Ts, "dG": dG.squeeze()},
-        composition=inputs,
-    )
+    # a spline interpolation of the dG-over-T curve
+    ms_GO = Ms_Ghosh_Olson({"T": Ts, "dG": dG.squeeze()}, dbf=dbf)
+    ms_GO.load_parameters('data/optimization_results.pickle', 'Nelder-Mead') #'Nelder-Mead' 'SLSQP' 'Powell' 'BFGS'
+    
     # To find the root of the interpolated curve the Newton algorithm is used, which requires a starting point.
     # We use a computationally cheap empirical model for the initial guess of Ms
     if T_guess is None:
         T_guess = Ms_Ingber(**inputs)
 
-    # Solve the root finding problem to obtain Ms
-    return ms_GO.Ms(T_initial=T_guess)
+    # Compute the critical dG and solve the root finding problem to obtain Ms
+    return ms_GO.Ms(
+        T_initial=T_guess,
+        composition=inputs,
+    )

@@ -27,7 +27,7 @@ atomicweights = {  # [g/mol]
 }
 
 
-def weight_pct2mol(composition,dbf=None):
+def weight_pct2mol(composition, dbf=None):
     """
     Convert weight percent composition to mole fractions in a steel alloy.
 
@@ -102,7 +102,7 @@ def weight_pct2mol(composition,dbf=None):
 
         return composition_mol_v
 
-def mol2weight_pct(composition,dbf=None):
+def mol2weight_pct(composition, dbf=None):
     """
     Convert mole fraction composition to weight percent composition in a steel alloy.
 
