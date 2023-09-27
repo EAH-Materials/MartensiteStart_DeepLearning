@@ -1,3 +1,4 @@
+import pickle
 from pycalphad import Database, calculate, variables as v
 from src.utilities_steel import Ms_Ingber, weight_pct2mol
 from src.Ghosh_Olson import Ms_Ghosh_Olson
@@ -12,7 +13,10 @@ dbf = Database(
     os.path.join(os.path.dirname(__file__), "mc_fe_v2.059.pycalphad.tdb")
 )  # Matcalc iron
 warnings.resetwarnings()
-
+ 
+with open('data/optimization_results.pickle','rb') as file:
+    fitted_go_prms = pickle.load(file)['Nelder-Mead']['x']['x'] #'Nelder-Mead' 'SLSQP' 'Powell' 'BFGS'
+    
 def get_point(composition):
     """
     Generate site fractions for a given chemical composition in Fe-alloys.
@@ -109,8 +113,7 @@ def ms_Calphad(T_guess=None, **kwargs):
     # Use the Ghosh-Olsen model to compute the energy needed to initiate phase transition. This shifts the dG-curve accordingly
     # and the root of this shifted curve defines the Ms-temperature. Initializing Ms_Ghosh_Olson computes
     # a spline interpolation of the dG-over-T curve
-    ms_GO = Ms_Ghosh_Olson({"T": Ts, "dG": dG.squeeze()}, dbf=dbf)
-    ms_GO.load_parameters('data/optimization_results.pickle', 'Nelder-Mead') #'Nelder-Mead' 'SLSQP' 'Powell' 'BFGS'
+    ms_GO = Ms_Ghosh_Olson({"T": Ts, "dG": dG.squeeze()}, parameters=fitted_go_prms, dbf=dbf)
     
     # To find the root of the interpolated curve the Newton algorithm is used, which requires a starting point.
     # We use a computationally cheap empirical model for the initial guess of Ms
