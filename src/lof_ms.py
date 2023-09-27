@@ -1,8 +1,5 @@
 import numpy as np
-import pickle
-
 from sklearn.neighbors import LocalOutlierFactor
-import sklearn
 
 class LofMs():
     def __init__(self,df_data, space=[0,-1]):
