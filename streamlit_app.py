@@ -37,7 +37,7 @@ disclaimer = "Limitation of liability for website content: The developers may no
 def get_inputs(element):
     col1, col2, col3 = st.columns(3)
     with col1:
-        c = element("Carbon (C)", 0.0, 2.25, 0.0)
+        c = element("Carbon (C) [Critical List EU :x: US:white_check_mark:]", 0.0, 2.25, 0.0)
         mn = element("Manganese (Mn)", 0.0, 10.24, 0.0)
         si = element("Silicon (Si)", 0.0, 3.8, 0.0)
         cr = element("Chromium (Cr)", 0.0, 17.98, 0.0)
@@ -168,6 +168,44 @@ def print_result(predictions):
         __print_func__(predictions[3], "LO", "LOF:")
 
 
+def print_ecological_results(composition):
+    def __print_func__(value, unit, head, suffix):
+        delta = 0
+        if f"previous_eco_value_{suffix}" in st.session_state:
+            delta = value - st.session_state[f"previous_eco_value_{suffix}"]
+        st.markdown("#### **" + head + "**")
+        st.metric(
+                    f"Ecological_{suffix}",
+                    f"{value:5.2f} {unit}",
+                    delta=f"{delta:5.2f} {unit}",
+                    label_visibility="hidden",
+                )
+        st.write("compared to previous calculation")
+        st.session_state[f"previous_eco_value_{suffix}"] = value
+
+    def __calc_embodied_energy__(composition):
+        return 0
+    
+    def __calc_co2__(composition):
+        return 0
+    
+    def __calc_water_usage__(composition):
+        return 0
+
+    st.subheader("Ecological information (per kg steel):")
+    col_embodied_energy, col_co2, col_water_usage = st.columns(3)
+    with col_embodied_energy:
+        embodied_energy = __calc_embodied_energy__(composition)
+        __print_func__(embodied_energy, "MJ", "Embodied Energy", "ee")
+
+    with col_co2:
+        co2 = __calc_co2__(composition)
+        __print_func__(co2, "kg", "CO2", "co2")
+
+    with col_water_usage:
+        water_usage = __calc_water_usage__(composition)
+        __print_func__(water_usage, "l", "Water Usage", "water")
+
 if __name__ == "__main__":
     st.set_page_config(
         page_title="Predicting the Martensite Start Temperature for Steels",
@@ -199,7 +237,7 @@ if __name__ == "__main__":
                     height: 81vh !important;
                     border: 1px solid #000;
                 }
-                .stDataFrame{
+                .stDataFrame{:
                     height: 80vh !important;
                 }
                 .stDataFrame > div:nth-child(1){
@@ -248,6 +286,7 @@ if __name__ == "__main__":
 
         # st.write("\n")
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
+        print_ecological_results(composition_vec_trans)
 
         # st.write("\n")
         data_sample_representation = st.toggle(
@@ -348,6 +387,8 @@ if __name__ == "__main__":
             "This website and the deep learning model are open-source and published under <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE'>GNU GPLv3</a> on GitHub: <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning'>https://github.com/EAH-Materials/MartensiteStart_DeepLearning</a>.",
             unsafe_allow_html=True,
         )
+
+    st.divider()
     st.write(
         "<a target='_blank' href='https://www.eah-jena.de/impressum'>Imprint (Impressum)</a> (Forwards to the website of the University of Applied Sciences Jena in new tab)",
         unsafe_allow_html=True,
