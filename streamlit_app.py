@@ -349,7 +349,7 @@ if __name__ == "__main__":
             unsafe_allow_html=True,
         )
     st.write(
-        "<a target='_blank' href='https://www.eah-jena.de/impressum'>Impressum</a> (Forwards to the website of the University of Applied Sciences Jena in new tab)",
+        "<a target='_blank' href='https://www.eah-jena.de/impressum'>Imprint (Impressum)</a> (Forwards to the website of the University of Applied Sciences Jena in new tab)",
         unsafe_allow_html=True,
     )
     st.write(disclaimer)
