@@ -211,7 +211,7 @@ def print_ecological_results(composition):
         return __calc_eco_value__(eco_data, composition, "water_avg")
 
     eco_data = load_ecological_data()
-    st.subheader("Ecological information (per kg steel):")
+    st.subheader("Ecological Information (per kg steel):")
     col_embodied_energy, col_co2, col_water_usage = st.columns(3)
     with col_embodied_energy:
         embodied_energy = __calc_embodied_energy__(eco_data, composition)
