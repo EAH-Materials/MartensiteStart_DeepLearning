@@ -287,7 +287,7 @@ if __name__ == "__main__":
         with col5:
             comp = st.button("Compute")
         with col6:
-            if st.checkbox("Neural Network", value=True):
+            if st.checkbox("Artificial Neural Network", value=True):
                 models.append("NN")
         with col7:
             if st.checkbox("Empirical Model"):
@@ -348,8 +348,8 @@ if __name__ == "__main__":
             "This website and the deep learning model are open-source and published under <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE'>GNU GPLv3</a> on GitHub: <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning'>https://github.com/EAH-Materials/MartensiteStart_DeepLearning</a>.",
             unsafe_allow_html=True,
         )
-        st.write(
-            "<a target='_blank' href='https://www.eah-jena.de/impressum'>Impressum</a> (Forwards to the website of the University of Applied Sciences Jena in new tab)",
-            unsafe_allow_html=True,
-        )
-        st.write(disclaimer)
+    st.write(
+        "<a target='_blank' href='https://www.eah-jena.de/impressum'>Impressum</a> (Forwards to the website of the University of Applied Sciences Jena in new tab)",
+        unsafe_allow_html=True,
+    )
+    st.write(disclaimer)
