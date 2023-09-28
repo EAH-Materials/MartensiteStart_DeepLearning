@@ -121,7 +121,7 @@ def print_result(predictions):
             st.metric(
                 f"LOF",
                 f"{predictions[3]:5.2f}",
-                delta=f"{delta:5.2f} ",
+                delta=f"{delta:5.2f}",
                 label_visibility="hidden",
                 delta_color="inverse",
             )
@@ -145,13 +145,17 @@ def print_result(predictions):
     st.subheader("Martensite Start Temperatures:")
     cols_NN, col_EM, col_TD, col_LO = st.columns(4)
     with cols_NN:
-        __print_func__(predictions[0], "NN", "Neural Network:")
+        __print_func__(predictions[0], "NN", "Artificial Neural Network:")
+        with st.expander("ⓘ"):
+            st.markdown(
+                "[Paper will be published shortly] This [artificial neural network](https://github.com/EAH-Materials/MartensiteStart_DeepLearning) had been trained on 1,500 records of experimental data, $M_s$ ranging from -123 °C to 790 °C. Be aware, the model does not know about physical limitations and may thus predict a temperature lower than 0 K or differ by a lot from the other models for alloys that are not well represented in our training data."
+            )
     with col_EM:
         __print_func__(predictions[1], "EM", "Empirical Model:")
         with st.expander("ⓘ"):
             st.markdown(
-                "This [empirical model](https://onlinelibrary.wiley.com/doi/full/10.1002/srin.202100576) estimates the martensite start temperature as a function of chemical composition. It is developed and optimized for high-carbon steels with a Ms range between 0 and 50°C. It is based on the mean value of several empirical models from the literature.",
-                help="$M_{\\text{s}}=\\frac{1}{8}\\left\\{4241.9-2322.27x_{\\text{C}}-284x_{\\text{Mn}}- \n 54.4x_{\\text{Si}}-166.4x_{\\text{Cr}}-137.4x_{\\text{Ni}}-83.5x_{\\text{Mo}}-30x_{\\text{Al}}+38.58x_{\\text{Co}}-600 \\lbrack 1-exp(-0.96x_{\\text{C}}) \\rbrack \\right\\} $",
+                "This [empirical model](https://onlinelibrary.wiley.com/doi/full/10.1002/srin.202100576) estimates the martensite start temperature as a function of chemical composition. It is developed and optimized for high-carbon steels with a $M_s$ range between 0 and 50 °C. It is based on the mean value of several empirical models from the literature. Click ?-symbol on right for the exact formular.",
+                help="$M_{\\text{s}}=\\frac{1}{8}\\left\\{4241.9-2322.27x_{\\text{C}}-284x_{\\text{Mn}}- \n 54.4x_{\\text{Si}}-166.4x_{\\text{Cr}}-137.4x_{\\text{Ni}}-83.5x_{\\text{Mo}}-30x_{\\text{Al}}+38.58x_{\\text{Co}}-600 \\lbrack 1-exp(-0.96x_{\\text{C}}) \\rbrack \\right\\}$",
             )
     with col_TD:
         __print_func__(predictions[2], "TD", "Thermodynamic Model:")
