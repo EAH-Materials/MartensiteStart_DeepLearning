@@ -53,7 +53,7 @@ def get_point(composition):
 
     site_1_sum = np.sum(np.stack([site_1[key] for key in site_1], axis=-1), axis=-1)
     site_2_sum = 1.0 - site_1_sum
-    # site_2_sum = np.sum(np.stack([site_2[key] for key in site_2], axis=-1), axis=-1) if len(site_2) > 0 else 0.0
+    
     res = {
         "FCC_A1": np.zeros((1, len(sorted_elements) + 1)),
         "BCC_A2": np.zeros((1, len(sorted_elements) + 1)),

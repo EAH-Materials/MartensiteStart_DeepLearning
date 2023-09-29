@@ -256,16 +256,11 @@ if __name__ == "__main__":
                     height: 81vh !important;
                     border: 1px solid #000;
                 }
-                .stDataFrame{:
-                    height: 80vh !important;
-                }
-                .stDataFrame > div:nth-child(1){
-                    height: 80vh !important;
-                }
                 #MainMenu {visibility: hidden;}
                 footer {visibility: hidden;}
         </style>
         """,
+
         unsafe_allow_html=True,
     )
 
@@ -303,11 +298,9 @@ if __name__ == "__main__":
         Ms_TD = ms_Calphad(**composition_dict, T_guess=Ms_EM)
         Lof_S = lof.score_samples(composition_vec)[0]
 
-        # st.write("\n")
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
         print_ecological_results(composition_dict)
 
-        # st.write("\n")
         data_sample_representation = st.toggle(
             "Data Sample representation compared to Dataset.", value=False
         )
@@ -321,10 +314,14 @@ if __name__ == "__main__":
         fig = None
         col1, col2 = st.columns(2)
         with col1:
-            st.toggle('Use settings in "Calculator"-tab as reference', False)
-            st.text('Not yet implemented')
+            if st.toggle('Use reference composition', False, help="The reference composition can be set in the 'Calculator'-tab. All computations are then based on this given composition, varying the elements given in this tab. If this option is deactivated all values besides the given ranges are assumed to be zero."):
+                composition_dict_rng = composition_dict
+            else:
+                composition_dict_rng = None
         with col2:
             dim2d = st.toggle("1D/2D Range", False)
+        if composition_dict_rng is not None:
+            st.dataframe(data=pd.DataFrame(composition_dict_rng,index=[0]), height=32, use_container_width=True)
         if dim2d:
             col3, col4 = st.columns(2)
             with col3:
@@ -371,6 +368,7 @@ if __name__ == "__main__":
                                 "max": e2_ub,
                                 "sample_points": 16,
                             },
+                            "ref":composition_dict_rng
                         }
                     ]
                     fig = range_study_2D(study, df=data, models=models, Ms_ML=model)
@@ -382,7 +380,8 @@ if __name__ == "__main__":
                                 "min": e1_lb,
                                 "max": e1_ub,
                                 "sample_points": 16,
-                            }
+                            },
+                            "ref":composition_dict_rng
                         }
                     ]
                     fig = range_study_1D(study, df=data, models=models, Ms_ML=model)
@@ -390,7 +389,7 @@ if __name__ == "__main__":
             st.plotly_chart(fig, use_container_width=True)
 
     with data_tab:
-        st.dataframe(data, use_container_width=True)
+        st.dataframe(data, use_container_width=True, height=600)
 
     with info_tab:
         st.subheader(
