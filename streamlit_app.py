@@ -84,7 +84,6 @@ def get_inputs(element):
 
 
 def plot_lof_space(lof_space, sample_value):
-    st.subheader("Data Sample representation:")
 
     fig = make_subplots(rows=1, cols=2, subplot_titles=("Box Plot", "Histogram"))
     fig.add_trace(
@@ -106,10 +105,14 @@ def plot_lof_space(lof_space, sample_value):
     fig.add_vline(
         x=sample_value.squeeze(), line_dash="dash", line_color="red", row=1, col="all"
     )
-
+    if max(lof_space) >= sample_value.squeeze():
+        upper_xlim = max(lof_space)
+    else:
+        upper_xlim = sample_value.squeeze()
+    
     fig.update_layout(
-        xaxis=dict(showgrid=True, title_text="LOF"),
-        xaxis2=dict(showgrid=True, title_text="LOF"),
+        xaxis=dict(showgrid=True, title_text="LOF",range=[0,upper_xlim+0.2]),
+        xaxis2=dict(showgrid=True, title_text="LOF",range=[0,upper_xlim+0.2]),
         yaxis=dict(showgrid=True),
         yaxis2=dict(showgrid=True, title_text="# of samples"),
     )
@@ -170,7 +173,14 @@ def print_result(predictions):
             )
             st.image("imgs/Gibbs_vs_T.png")
     with col_LO:
-        __print_func__(predictions[3], "LO", "LOF:")
+        __print_func__(predictions[3], "LO", "Data Sample representation:")
+        with st.expander("ⓘ"):
+            st.markdown(
+                "Local Outlier Factor [LOF](https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf) is used to represent the Input Data Sample compared to the Dataset. \n The local outlier factor is based on a concept of a local density, where locality is given by k nearest neighbors, whose distance is used to estimate the density. By comparing the local density of an object to the local densities of its neighbors, one can identify regions of similar density, and points that have a substantially lower density than their neighbors. \n LOF is defined between $0$ and $\infty$, while $1$ means that the local density of an object is equal to the local densities of its neighbors. Data Samples with a low LOF value are well represented by the Dataset, while those with a high LOF value are not. "
+                
+            )
+        #to compute Gibbs energies for Austenite and Martensite over a large temperature range and the [Ghosh-Olson model](https://link.springer.com/article/10.1361/105497101770338653) to compute the driving force for martensitic transformation $Δ_G$."
+        
 
 
 def print_ecological_results(composition):
@@ -303,15 +313,17 @@ if __name__ == "__main__":
         Ms_TD = ms_Calphad(**composition_dict, T_guess=Ms_EM)
         Lof_S = lof.score_samples(composition_vec)[0]
 
-        # st.write("\n")
+        st.write("\n")
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
         print_ecological_results(composition_dict)
 
-        # st.write("\n")
+        st.write("\n")
+        st.subheader("Data Sample representation:")
         data_sample_representation = st.toggle(
             "Data Sample representation compared to Dataset.", value=False
         )
         if data_sample_representation:
+            st.write("Visualize the LOF Value of the Data Sample compared the LOF Values of all Datapoints in the Dataset.")
             plot_lof_space(
                 lof_space=lof.dataset_lof(),
                 sample_value=lof.score_samples(composition_vec),
