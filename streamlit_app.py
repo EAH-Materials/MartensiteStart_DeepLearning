@@ -370,7 +370,7 @@ if __name__ == "__main__":
                             "ref":composition_dict_rng
                         }
                     ]
-                    fig = range_study_2D(study, df=data, models=models, Ms_ML=model)
+                    fig = range_study_2D(study, df=data, models=models)
                 else:
                     study = [
                         {
@@ -383,7 +383,7 @@ if __name__ == "__main__":
                             "ref":composition_dict_rng
                         }
                     ]
-                    fig = range_study_1D(study, df=data, models=models, Ms_ML=model)
+                    fig = range_study_1D(study, df=data, models=models)
         if fig is not None:
             st.plotly_chart(fig, use_container_width=True)
 
