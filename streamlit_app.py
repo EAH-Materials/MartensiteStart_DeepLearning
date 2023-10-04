@@ -266,29 +266,23 @@ if __name__ == "__main__":
                     height: 81vh !important;
                     border: 1px solid #000;
                 }
-                .stDataFrame{:
-                    height: 80vh !important;
-                }
-                .stDataFrame > div:nth-child(1){
-                    height: 80vh !important;
-                }
                 #MainMenu {visibility: hidden;}
                 footer {visibility: hidden;}
         </style>
         """,
+
         unsafe_allow_html=True,
     )
 
     col1, col3 = st.columns(2)
     with col1:
-        st.image("imgs/eah_logo.jpg", width=300)
+        st.image("imgs/eah_logo.jpg", width=150)
     with col3:
-        st.image("imgs/Carl-Zeiss-Stiftung_Logo.png", width=150)
+        st.image("imgs/Carl-Zeiss-Stiftung_Logo.png", width=75)
     st.title("Predicting the Martensite Start Temperature for Steels")
-    st.write(disclaimer)
 
     st.write(
-        "Input in wt %. Upper limit represents the upper limits within the training data."
+        "All composition values in wt %. Upper limits represent the maximum values in the training data."
     )
     comp_tab, range_tab, data_tab, info_tab = st.tabs(
         ["Calculator", "Range Calculator", "Data", "Publication information"]
@@ -313,12 +307,18 @@ if __name__ == "__main__":
         Ms_TD = ms_Calphad(**composition_dict, T_guess=Ms_EM)
         Lof_S = lof.score_samples(composition_vec)[0]
 
+<<<<<<< HEAD
         st.write("\n")
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
         print_ecological_results(composition_dict)
 
         st.write("\n")
         st.subheader("Data Sample representation:")
+=======
+        print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
+        print_ecological_results(composition_dict)
+
+>>>>>>> cc856077ad4e11cee902f98d3f8b40797b2e79a9
         data_sample_representation = st.toggle(
             "Data Sample representation compared to Dataset.", value=False
         )
@@ -333,10 +333,14 @@ if __name__ == "__main__":
         fig = None
         col1, col2 = st.columns(2)
         with col1:
-            st.toggle('Use settings in "Calculator"-tab as reference', False)
-            st.text('Not yet implemented')
+            if st.toggle('Use reference composition', False, help="The reference composition can be set in the 'Calculator'-tab. All computations are then based on this given composition, varying the elements given in this tab. If this option is deactivated all values besides the given ranges are assumed to be zero."):
+                composition_dict_rng = composition_dict
+            else:
+                composition_dict_rng = None
         with col2:
             dim2d = st.toggle("1D/2D Range", False)
+        if composition_dict_rng is not None:
+            st.dataframe(data=pd.DataFrame(composition_dict_rng,index=[0]), height=32, use_container_width=True,hide_index=True)
         if dim2d:
             col3, col4 = st.columns(2)
             with col3:
@@ -383,9 +387,10 @@ if __name__ == "__main__":
                                 "max": e2_ub,
                                 "sample_points": 16,
                             },
+                            "ref":composition_dict_rng
                         }
                     ]
-                    fig = range_study_2D(study, df=data, models=models, Ms_ML=model)
+                    fig = range_study_2D(study, df=data, models=models)
                 else:
                     study = [
                         {
@@ -394,34 +399,33 @@ if __name__ == "__main__":
                                 "min": e1_lb,
                                 "max": e1_ub,
                                 "sample_points": 16,
-                            }
+                            },
+                            "ref":composition_dict_rng
                         }
                     ]
-                    fig = range_study_1D(study, df=data, models=models, Ms_ML=model)
+                    fig = range_study_1D(study, df=data, models=models)
         if fig is not None:
             st.plotly_chart(fig, use_container_width=True)
 
     with data_tab:
-        st.dataframe(data, use_container_width=True)
+        st.dataframe(data, use_container_width=True, height=600)
 
     with info_tab:
-        st.subheader(
+        st.subheader("Availability & further Information:")
+        st.markdown(
             "Details on the used Deep Learning Model can be found in Paper: TODO"
         )
-        st.subheader("Acknowledgements:")
-        st.write("The SteelDesAIn project is funded by the Carl Zeiss Foundation.")
         st.markdown(
-            "Contains information from TODO: DATABASE NAME, which is made available here under the <a target='_blank' href='https://opendatacommons.org/licenses/odbl/1-0/'>Open Database License (ODbL)</a>.",
-            unsafe_allow_html=True,
+            "This website and all the models used are open-source and published under [GNU GPLv3](https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE) on GitHub: [https://github.com/EAH-Materials/MartensiteStart_DeepLearning](https://github.com/EAH-Materials/MartensiteStart_DeepLearning).",
         )
-        st.write(
-            "This website and the deep learning model are open-source and published under <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE'>GNU GPLv3</a> on GitHub: <a target='_blank' href='https://github.com/EAH-Materials/MartensiteStart_DeepLearning'>https://github.com/EAH-Materials/MartensiteStart_DeepLearning</a>.",
-            unsafe_allow_html=True,
+        st.subheader("Acknowledgements:")
+        st.markdown("The SteelDesAIn project is funded by the [Carl Zeiss Foundation](https://www.carl-zeiss-stiftung.de/en/).")
+        st.markdown(
+            "Contains information from the thermodynamic database 'mc_fe_v2.059.tdb', which is made available here under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/).",
         )
 
     st.divider()
-    st.write(
-        "<a target='_blank' href='https://www.eah-jena.de/impressum'>Imprint (Impressum)</a> (Forwards to the website of the University of Applied Sciences Jena in new tab)",
-        unsafe_allow_html=True,
+    st.markdown(
+        "[Imprint (Impressum)](https://www.eah-jena.de/impressum) (Forwards to the website of the University of Applied Sciences Jena in new tab)"
     )
-    st.write(disclaimer)
+    st.markdown(disclaimer)

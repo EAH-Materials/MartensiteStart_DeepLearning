@@ -74,45 +74,74 @@ class DeployModel(LightningModule):
     
     # Inference methods
     def inference_pandas(self, df):
-        self.scale_data_columns_pandas(df)
+        self._scale_data_columns_pandas(df)
         with torch.no_grad():
             result = self(FloatTensor(df.values))
-        result = self.rescale_target(result).detach().numpy().squeeze()
+        result = self._rescale_target(result).detach().numpy().squeeze()
         return result
     
     def inference_vector(self, vec):
-        self.scale_data_columns_vec(vec)
+        self._scale_data_columns_vec(vec)
         with torch.no_grad():
             result = self(FloatTensor(vec))
-        result = self.rescale_target(result).detach().numpy().squeeze()
+        result = self._rescale_target(result).detach().numpy().squeeze()
         return result
     
-    def scale_data_columns_pandas(self, df):
+    def inference_dict(self, dict):
+        vec = self._compose_vector(dict)
+        return self.inference_vector(vec)
+    
+    def _scale_data_columns_pandas(self, df):
         for column_name in df.columns:
             df[column_name] = self._scale(df[column_name], self.data_mean[column_name], self.data_std[column_name])
     
-    def scale_data_columns_vec(self, vec):
+    def _scale_data_columns_vec(self, vec):
         for ix, val in enumerate(vec):
             vec[ix] = self._scale(val, self.get_nth_val(self.data_mean, ix), self.get_nth_val(self.data_std,ix))
 
-    def scale_target_columns(self, df):
+    def _scale_target_columns(self, df):
         for column_name in df.columns:
-            df[column_name] = self.scale_target_column(df, column_name)
+            df[column_name] = self._scale_target_column(df, column_name)
 
-    def scale_target_column(self, df, column):
+    def _scale_target_column(self, df, column):
         return self._scale(
             df[column], self.target_mean[column], self.target_std[column]
         )
     
-    def rescale_target(self, value):
+    def _rescale_target(self, value):
         return value*self.target_std + self.target_mean
         
     def _scale(self, value, mean, std):
         return (value - mean) / std
     
+    def _compose_vector(self, composition_dict):
+        vector = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        for ix, key in enumerate(self.order):
+            if key in composition_dict.keys():
+                vector[ix] = composition_dict[key]
+
+        return vector
+    
     # Helper function to index into an ordered dict
     @staticmethod
     def get_nth_val(dictionary, n=0):
+        """
+        Get the nth value from an ordered dictionary.
+
+        This static method allows you to retrieve the nth value from an ordered dictionary,
+        optionally specifying the position using the 'n' parameter.
+
+        Args:
+            dictionary (OrderedDict or dict): An ordered dictionary or a regular dictionary.
+                The order of retrieval is based on insertion order if using an OrderedDict.
+            n (int, optional): The index of the value to retrieve. Default is 0, which returns the first value.
+
+        Returns:
+            object: The value at the specified index 'n' within the dictionary.
+
+        Raises:
+            IndexError: If the index 'n' is out of range or if the dictionary is empty.
+        """
         if n < 0:
             n += len(dictionary)
         for i, val in enumerate(dictionary.values()):
