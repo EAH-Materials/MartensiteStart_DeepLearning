@@ -307,18 +307,12 @@ if __name__ == "__main__":
         Ms_TD = ms_Calphad(**composition_dict, T_guess=Ms_EM)
         Lof_S = lof.score_samples(composition_vec)[0]
 
-<<<<<<< HEAD
         st.write("\n")
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
         print_ecological_results(composition_dict)
 
         st.write("\n")
         st.subheader("Data Sample representation:")
-=======
-        print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
-        print_ecological_results(composition_dict)
-
->>>>>>> cc856077ad4e11cee902f98d3f8b40797b2e79a9
         data_sample_representation = st.toggle(
             "Data Sample representation compared to Dataset.", value=False
         )
