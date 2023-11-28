@@ -174,23 +174,6 @@ def print_result(predictions):
                 
             )
         #to compute Gibbs energies for Austenite and Martensite over a large temperature range and the [Ghosh-Olson model](https://link.springer.com/article/10.1361/105497101770338653) to compute the driving force for martensitic transformation $Δ_G$."
-        
-
-
-def print_ecological_results(composition):
-    def __print_func__(value, unit, head, suffix):
-        delta = 0
-        if f"previous_eco_value_{suffix}" in st.session_state:
-            delta = value - st.session_state[f"previous_eco_value_{suffix}"]
-        st.markdown("#### **" + head + "**")
-        st.metric(
-                    f"Ecological_{suffix}",
-                    f"{value:5.2f} {unit}",
-                    delta=f"{delta:5.2f} {unit}",
-                    label_visibility="hidden",
-                )
-        st.write("compared to previous calculation")
-        st.session_state[f"previous_eco_value_{suffix}"] = value
 
 if __name__ == "__main__":
     st.set_page_config(
@@ -266,7 +249,6 @@ if __name__ == "__main__":
 
         st.write("\n")
         print_result([Ms_NN, Ms_EM, Ms_TD, Lof_S])
-        print_ecological_results(composition_dict)
 
         st.write("\n")
         st.subheader("Data Sample representation:")
