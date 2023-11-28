@@ -23,12 +23,6 @@ def load_model():
 def load_data():
     return pd.DataFrame(pd.read_csv(os.path.join("data", "MsDatabase_2022.csv")))
 
-@st.cache_resource
-def load_ecological_data():
-    df = pd.DataFrame(pd.read_csv(os.path.join("data", "EcoPropertiesOfAlloyingElements.csv")))
-    df.set_index('element', inplace = True)
-    return df
-
 # @st.cache_resource
 def load_lof(df_data=None):
     if df_data is None:
@@ -197,43 +191,6 @@ def print_ecological_results(composition):
                 )
         st.write("compared to previous calculation")
         st.session_state[f"previous_eco_value_{suffix}"] = value
-
-    def __calc_eco_value__(eco_data, composition, key):
-        fe = (100. - sum(composition.values())) * eco_data[key]["fe"]
-
-        for alloy in list(composition.items()):
-            element = alloy[0].lower()
-            value = alloy[1]
-            if value <= 0 or element in ["c", "n"]:
-                continue
-            eco_value = eco_data[key][element]
-            fe += value * eco_value
-
-        return fe / 100
-
-    def __calc_embodied_energy__(eco_data, composition):
-        return __calc_eco_value__(eco_data, composition, "embodied_avg")
-    
-    def __calc_co2__(eco_data, composition):
-        return __calc_eco_value__(eco_data, composition, "co2_avg")
-
-    def __calc_water_usage__(eco_data, composition):
-        return __calc_eco_value__(eco_data, composition, "water_avg")
-
-    eco_data = load_ecological_data()
-    st.subheader("Ecological Information (per kg steel):")
-    col_embodied_energy, col_co2, col_water_usage = st.columns(3)
-    with col_embodied_energy:
-        embodied_energy = __calc_embodied_energy__(eco_data, composition)
-        __print_func__(embodied_energy, "MJ", "Embodied Energy", "embodied")
-
-    with col_co2:
-        co2 = __calc_co2__(eco_data, composition)
-        __print_func__(co2, "kg", "CO2", "co2")
-
-    with col_water_usage:
-        water_usage = __calc_water_usage__(eco_data, composition)
-        __print_func__(water_usage, "l", "Water Usage", "water")
 
 if __name__ == "__main__":
     st.set_page_config(
