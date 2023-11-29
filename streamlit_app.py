@@ -349,7 +349,7 @@ if __name__ == "__main__":
             "Details on the used Deep Learning Model can be found in Paper: TODO"
         )
         st.markdown(
-            "This website and all the models used are open-source and published under [GNU GPLv3](https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE) on GitHub: [https://github.com/EAH-Materials/MartensiteStart_DeepLearning](https://github.com/EAH-Materials/MartensiteStart_DeepLearning).",
+            "This website and the deep learning model are open-source and published under [GNU GPLv3](https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE) on GitHub: [https://github.com/EAH-Materials/MartensiteStart_DeepLearning](https://github.com/EAH-Materials/MartensiteStart_DeepLearning).",
         )
         st.subheader("Acknowledgements:")
         st.markdown("The SteelDesAIn project is funded by the [Carl Zeiss Foundation](https://www.carl-zeiss-stiftung.de/en/).")
