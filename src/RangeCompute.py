@@ -43,7 +43,9 @@ def import_filter_measured(
     rest_elements.pop(range_1["element"].capitalize())
     if range_2 is not None:
         rest_elements.pop(range_2["element"].capitalize())
-        range_mask = (df[range_1["element"]].between(range_1["min"], range_1["max"])) & (df[range_2["element"]].between(range_2["min"], range_2["max"]))
+        range_mask = (
+            df[range_1["element"]].between(range_1["min"], range_1["max"])
+        ) & (df[range_2["element"]].between(range_2["min"], range_2["max"]))
     else:
         range_mask = df[range_1["element"]].between(range_1["min"], range_1["max"])
 
@@ -90,10 +92,13 @@ def comp_dict_vec_2D(e1, e2, e1_val, e2_val, order, ref=None):
 
 
 def remove_outlier(array, threshold=5):
-    zscore = (array - np.nanmean(array)) / np.nanstd(array)
-    array[np.abs(zscore) > threshold] = np.nan
-    array[array < 0.0] = np.nan
-    return array
+    if np.nanstd(array) == 0:
+        return array
+    else:
+        zscore = (array - np.nanmean(array)) / np.nanstd(array)
+        array[np.abs(zscore) > threshold] = np.nan
+        array[array < 0.0] = np.nan
+        return array
 
 
 shortcut_to_long = {
@@ -161,7 +166,8 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
 
     for sx, study in enumerate(studies):
         e1 = study["e1"]
-        if "ref" not in study: study["ref"] = None
+        if "ref" not in study:
+            study["ref"] = None
         e1_rng = np.linspace(e1["min"], e1["max"], e1["sample_points"])
         Ms = {model: np.zeros([e1["sample_points"]], float) for model in models}
         futures = {"futures": [], "keys": []}
@@ -199,7 +205,7 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
             Ms[key] = remove_outlier(Ms[key])
 
         measured = import_filter_measured(
-            "data/MsDatabase_2022.csv", e1, None, 0.2, df, study["ref"]
+            "data/MsDatabase_2022_complete.csv", e1, None, 0.3, df, study["ref"]
         )
 
         for idx, key in enumerate(models):
@@ -286,7 +292,7 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
     Notes:
         - The function uses parallel processing to efficiently compute Ms for a grid of composition values in 2D space.
         - The results are visualized as 3D surface plots for easy comparison.
-        
+
     Example:
         # Define study parameters
         studies = [
@@ -326,7 +332,8 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
     for sx, study in enumerate(studies):
         e1 = study["e1"]
         e2 = study["e2"]
-        if "ref" not in study: study["ref"] = None
+        if "ref" not in study:
+            study["ref"] = None
         e1_rng = np.linspace(e1["min"], e1["max"], e1["sample_points"])
         e2_rng = np.linspace(e2["min"], e2["max"], e2["sample_points"])
         Ms = {
@@ -374,7 +381,7 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
             Ms[key] = remove_outlier(Ms[key])
 
         measured = import_filter_measured(
-            "data/MsDatabase_2022.csv", e1, e2, 0.2, df, study["ref"]
+            "data/MsDatabase_2022_complete.csv", e1, e2, 0.2, df, study["ref"]
         )
 
         X, Y = np.meshgrid(e1_rng, e2_rng)
@@ -438,6 +445,7 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
             xaxis=dict(title=study["e1"]["element"] + " [wt%]"),
             yaxis=dict(title=study["e2"]["element"] + " [wt%]"),
             zaxis=dict(title="Ms [K]"),
+            bgcolor="rgba(0,0,0,0)",
         )
         fig.update_layout(**{f"scene{sx+1}": scene_layout})
 

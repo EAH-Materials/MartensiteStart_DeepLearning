@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
+# Description: This file contains a demo of the Ms_ML model. It shows how to use the model to predict Ms temperatures
+# for a given composition, and how to perform range studies to compare the model to thermodynamic and empirical models.
+
 from os.path import join
 from src.RangeCompute import range_study_1D, range_study_2D
 from src.MS_Pycalphad import ms_Calphad, Ms_Ingber
 from src.DeployModel import DeployModel
 from torch import device
+import warnings
 
 if __name__ == "__main__":
+    warnings.filterwarnings("ignore", category=ResourceWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     model = DeployModel.load_from_checkpoint(
         join("src", "checkpoint", "checkpoint"), map_location=device("cpu")
     )
@@ -27,7 +33,7 @@ if __name__ == "__main__":
     ]
     fig = range_study_1D(studies, models=["NN", "EM", "TD"], Ms_ML=model)
     fig.show()
-    fig.write_html("plot_1D.html")
+    # fig.write_html("plot_1D.html")
 
     # Range study 2D
     studies = [
@@ -47,4 +53,4 @@ if __name__ == "__main__":
     ]
     fig = range_study_2D(studies, models=["NN", "EM", "TD"], Ms_ML=model)
     fig.show()
-    fig.write_html("plot_2D.html")
+    # fig.write_html("plot_2D.html")
