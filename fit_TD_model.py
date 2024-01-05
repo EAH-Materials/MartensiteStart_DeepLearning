@@ -14,12 +14,13 @@ from tqdm import tqdm
 import pandas as pd
 import os
 
-
+# %% Load measured data (excluding test data)
 meas_data = pd.read_csv(os.path.join("data", "MsDatabase_2022.csv"))
 
-methods = ['Powell', 'Nelder-Mead','BFGS', 'SLSQP', ]
+# Specify fitting methods
+methods = ['Powell', 'Nelder-Mead','BFGS' ]
 
-plt.ion()
+plt.ion() 
 fig = plt.figure()
 ax = fig.add_subplot(111)
 li_p = {method: plt.plot(0,0) for method in methods}
@@ -28,13 +29,15 @@ ax.set_xlabel('Iteration')
 ax.set_ylabel('f(x)')
 plt.legend(methods)
 
-global max_x, max_y, min_y 
+global max_x, max_y, min_y
 max_x = -float('inf') 
 min_y = float('inf')
 max_y = -float('inf')
 
-def loss_fcn(x0, Ts, dGs, MS_meas, method=None):
+def loss_fcn(x0, Ts, dGs, MS_meas, method=None, x_fix=None):
     global max_x, max_y, min_y
+    if x_fix is not None:
+        x0 = np.concatenate((x0,x_fix))
     ms_GO = Ms_Ghosh_Olson(parameters=x0, dbf=dbf)
     MS_comp = np.zeros_like(MS_meas)
     for id in range(len(meas_data)):
@@ -42,9 +45,7 @@ def loss_fcn(x0, Ts, dGs, MS_meas, method=None):
         MS_comp[id] = ms_GO.Ms(T_guess, {**meas_data.iloc[id]}, {'T':Ts,'dG':dGs[id,:]})
 
     b_nan = ~np.isnan(MS_comp)
-    penalty = np.sum(np.isnan(MS_comp))
-    d_ms = np.mean(np.abs(MS_comp[b_nan]-MS_meas[b_nan])) + penalty
-    # d_ms = np.mean(np.sqrt((MS_comp[b_nan]-MS_meas[b_nan])**2)) 
+    d_ms = np.mean(np.sqrt((MS_comp[b_nan]-MS_meas[b_nan])**2))
     if method is not None:
         f_x[method].append(d_ms)
         for _, vals in f_x.items():
@@ -116,24 +117,30 @@ if not os.path.exists("data/dGs.npy"):
     np.save("data/dGs.npy",dGs)
     np.save("data/Mss.npy",Mss)
     np.save("data/Ts.npy",Ts)
-
+            
 # %% Fit
 meas_data.pop("Ms")
 dGs = np.load("data/dGs.npy")
 Mss = np.load("data/Mss.npy")
 Ts = np.load("data/Ts.npy")
 
-x0 = [1010.0,4009.0,1879.0,1980.0,172.0,1418.0,1868.0,1618.0,752.0,714.0,1653.0,3097.0,-352.0,1473.0,280.0]
+# Fit all parameters
+# x0 = [1010.0,4009.0,1879.0,1980.0,172.0,1418.0,1868.0,1618.0,752.0,714.0,1653.0,3097.0,-352.0,1473.0,280.0]
+# x_fix = None
+
+# Fit only K1 and C
+x0 = [1010.0,4009.0]
+x_fix = [1879.0, 1980.0,172.0,1418.0,1868.0,1618.0,752.0,714.0,1653.0,3097.0,-352.0,1473.0,280.0]
 
 res = {method: [] for method in methods}
 def optimize_method(method):
-    args = (Ts, dGs, Mss, method)
-    result = minimize(loss_fcn, x0, args=args, method=method, tol=1e-2, options={'maxiter':400,'xrtol':0.1})
+    args = (Ts, dGs, Mss, method, x_fix)
+    result = minimize(loss_fcn, x0, args=args, method=method, tol=1e-3, options={'maxfev':150})
     return method, result, result.fun
 
 for method in methods:
     method, result, val = optimize_method(method)
-    res[method] = {'x':result,'val':val,'history':f_x[method]}
+    res[method] = {'x':np.concatenate((result.x,x_fix)),'val':val,'history':f_x[method]}
     print(f'{method}: f(x): {val}   x: {result.x}')
 
     with open('data/optimization_results_'+method+'.pickle', 'wb') as file:
@@ -144,4 +151,3 @@ with open('data/optimization_results.pickle', 'wb') as file:
     pickle.dump(res, file)
 
 plt.savefig('Fitting.svg')
-

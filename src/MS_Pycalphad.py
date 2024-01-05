@@ -13,10 +13,16 @@ dbf = Database(
     os.path.join(os.path.dirname(__file__), "mc_fe_v2.059.pycalphad.tdb")
 )  # Matcalc iron
 warnings.resetwarnings()
- 
-with open('data/optimization_results.pickle','rb') as file:
-    fitted_go_prms = pickle.load(file)['Nelder-Mead']['x']['x'] #'Nelder-Mead' 'SLSQP' 'Powell' 'BFGS'
-    
+
+# Load fitted parameters
+if os.path.exists('data/optimization_results.pickle'): 
+    with open('data/optimization_results.pickle','rb') as file:
+        fitted_go_prms = pickle.load(file)['Powell']['x'] #'Nelder-Mead' 'Powell' 'BFGS'
+    print('Ms_Pycalphad.py: Loaded fitted parameters from data/optimization_results.pickle')
+else:
+    fitted_go_prms = None
+    print('Ms_Pycalphad.py: No fitted parameters found in data/optimization_results.pickle. Using default values by Ghosh and Olson.')
+
 def get_point(composition):
     """
     Generate site fractions for a given chemical composition in Fe-alloys.
@@ -78,8 +84,13 @@ def get_point(composition):
     res["BCC_A2"][:, ix] = 1.0 - (site_2_sum / 3.0)
     return res
 
-
 def ms_Calphad(T_guess=None, **kwargs):
+    """
+    Calculates the martensite start temperature (Ms) for the given composition.
+    Alloying elements are specified as keyword arguments, e.g. C=0.55, Si=0.8, Mn=0.5, etc. in wt%.
+    T_guess is the initial guess for the Ms-temperature. If not specified, the empirical Ingber-model 
+    is used to compute an initial guess.
+    """
     inputs = {k.upper(): v for k, v in kwargs.items()}
 
     comps = ["FE", "VA"]  # Elements to consider ('VA'=Vacancies)
