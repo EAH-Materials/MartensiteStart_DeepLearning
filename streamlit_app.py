@@ -170,10 +170,9 @@ def print_result(predictions):
         __print_func__(predictions[3], "LO", "Data Sample representation:")
         with st.expander("ⓘ"):
             st.markdown(
-                "Local Outlier Factor [LOF](https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf) is used to represent the Input Data Sample compared to the Dataset. \n The local outlier factor is based on a concept of a local density, where locality is given by k nearest neighbors, whose distance is used to estimate the density. By comparing the local density of an object to the local densities of its neighbors, one can identify regions of similar density, and points that have a substantially lower density than their neighbors. \n LOF is defined between $0$ and $\infty$, while $1$ means that the local density of an object is equal to the local densities of its neighbors. Data Samples with a low LOF value are well represented by the Dataset, while those with a high LOF value are not. "
+                "Local Outlier Factor [LOF](https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf) is used to represent the Input Data Sample compared to the Dataset. \n The local outlier factor is based on a concept of a local density, where locality is given by k nearest neighbors, whose distance is used to estimate the density. By comparing the local density of an object to the local densities of its neighbors, one can identify regions of similar density, and points that have a substantially lower density than their neighbors. \n LOF is defined between 0 and ∞, while 1 means that the local density of an object is equal to the local densities of its neighbors. Data Samples with a low LOF value are well represented by the Dataset, while those with a high LOF value are not. "
                 
             )
-        #to compute Gibbs energies for Austenite and Martensite over a large temperature range and the [Ghosh-Olson model](https://link.springer.com/article/10.1361/105497101770338653) to compute the driving force for martensitic transformation $Δ_G$."
 
 if __name__ == "__main__":
     st.set_page_config(
@@ -289,7 +288,7 @@ if __name__ == "__main__":
             e1_lb = st.number_input("Lower Bound", 0.0, None, 0.0)
             e1_ub = st.number_input("Upper Bound", 0.0, None, 1.0)
 
-        col5, col6, col7, col8 = st.columns(4)
+        col5, col6, col7, col8, col9 = st.columns(5)
         models = []
         with col5:
             comp = st.button("Compute")
@@ -302,6 +301,9 @@ if __name__ == "__main__":
         with col8:
             if st.checkbox("Thermodynamic Model"):
                 models.append("TD")
+        with col9:
+            mea_val_th = st.number_input("Measured Data Threshold", 0.0, 1.0, 0.05, 0.01, help="Relative threshold for measured data display in the range study. Default is 0.05 (5% of the maximum value within measured dataset). The points in the graph will be colored according to how well the composition matches the reference composition under consideration (black: good match -> white: bad match).")
+
         if comp:
             fig = None
             with st.spinner("Computing"):
@@ -323,7 +325,7 @@ if __name__ == "__main__":
                             "ref":composition_dict_rng
                         }
                     ]
-                    fig = range_study_2D(study, df=data, models=models)
+                    fig = range_study_2D(study, df=data, models=models,threshold_measured_data_display=mea_val_th)
                 else:
                     study = [
                         {
@@ -336,7 +338,7 @@ if __name__ == "__main__":
                             "ref":composition_dict_rng
                         }
                     ]
-                    fig = range_study_1D(study, df=data, models=models)
+                    fig = range_study_1D(study, df=data, models=models, threshold_measured_data_display=mea_val_th)
         if fig is not None:
             st.plotly_chart(fig, use_container_width=True)
 

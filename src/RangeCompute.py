@@ -14,7 +14,7 @@ from plotly.subplots import make_subplots
 
 
 def import_filter_measured(
-    path, range_1, range_2=None, threshold=0.05, df=None, ref=None
+    path, range_1, range_2=None, threshold=0.03, df=None, ref=None
 ):
     if df is None:
         df = pd.read_csv(path)
@@ -52,15 +52,28 @@ def import_filter_measured(
     ref_mask = np.all(
         [
             (
-                (df[element] >= (rest_elements[element] - threshold))
-                & (df[element] <= (rest_elements[element] + threshold))
+                (df[element] >= (rest_elements[element] - threshold * df[element].max()))
+                & (df[element] <= (rest_elements[element] + threshold * df[element].max()))
             )
             for element in rest_elements
         ],
         axis=0,
     )
     filtered_df = df[range_mask & ref_mask]
-    return filtered_df
+    diff = np.abs(filtered_df[list(rest_elements.keys())] - list(rest_elements.values())).sum(axis=1)
+    min_diff = diff.min()
+    max_diff = diff.max()
+    normalized_diff = (diff - min_diff) / (max_diff - min_diff)
+    normalized_diff = normalized_diff * (1.0 - 0.1) + 0.1
+    hover_text = []
+    for _, row in filtered_df.iterrows():
+        text = "<b>Composition:</b><br>"
+        for col_name, col_value in row.items():
+            if col_name != 'Ms':
+                text += f"{col_name}: {col_value}<br>"
+        hover_text.append(text)
+
+    return filtered_df, normalized_diff, hover_text
 
 
 def comp_dict_vec_1D(e1, e1_val, order, ref=None):
@@ -108,7 +121,7 @@ shortcut_to_long = {
 }
 
 
-def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
+def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None, threshold_measured_data_display=0.03):
     """
     Study the dependence of Martensite start temperature (Ms) on the composition of a steel alloy.
 
@@ -129,6 +142,7 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
         models (list, optional): A list of models to use for computing Ms (default: ["NN", "EM", "TD"]).
         df (DataFrame, optional): An optional DataFrame for plotting additional data processing (default: None).
         Ms_ML (object, optional): An instance of a machine learning model for Ms prediction (default: None).
+        threshold_measured_data_display (float, optional): The threshold for filtering measured data for display
 
     Returns:
         plotly.graph_objs.Figure: A Plotly figure containing subplots displaying Ms dependence on composition
@@ -204,8 +218,8 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
         for key in models:
             Ms[key] = remove_outlier(Ms[key])
 
-        measured = import_filter_measured(
-            "data/MsDatabase_2022_complete.csv", e1, None, 0.3, df, study["ref"]
+        measured, diff, hover_text = import_filter_measured(
+            "data/MsDatabase_2022_complete.csv", e1, None, threshold_measured_data_display, df, study["ref"]
         )
 
         for idx, key in enumerate(models):
@@ -237,13 +251,20 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
 
         fig.add_trace(
             go.Scatter(
-                x=measured[e1["element"]],
-                y=measured["Ms"],
-                mode="markers",
-                name="Measured data",
-                showlegend=(sx == 0),
-                marker=dict(size=8, color="black"),
-                legendgroup="legend_data",
+            x=measured[e1["element"]],
+            y=measured["Ms"],
+            mode="markers",
+            name="Measured data",
+            showlegend=(sx == 0),
+            marker=dict(
+                size=8, 
+                color=diff.values,
+                colorscale="gray", 
+                reversescale=False,
+            ),
+            hoverinfo="text",
+            text=hover_text,
+            legendgroup="legend_data",
             ),
             row=1,
             col=sx + 1,
@@ -252,11 +273,11 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
             title_text=study["e1"]["element"] + " [wt%]", row=1, col=sx + 1
         )
         fig.update_yaxes(title_text="Ms [K]", row=1, col=sx + 1)
-
+        
     return fig
 
 
-def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
+def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None, threshold_measured_data_display=0.03):
     """
     Study the dependence of Martensite start temperature (Ms) on the composition of a steel alloy in a 2D parameter space.
 
@@ -283,6 +304,7 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
         models (list, optional): A list of models to use for computing Ms (default: ["NN", "EM", "TD"]).
         df (DataFrame, optional): An optional DataFrame for plotting additional data processing (default: None).
         Ms_ML (object, optional): An instance of a machine learning model for Ms prediction (default: None).
+        threshold_measured_data_display (float, optional): The threshold for filtering measured data for display
 
     Returns:
         plotly.graph_objs.Figure: A Plotly figure containing 3D surface plots displaying Ms dependence on
@@ -380,8 +402,8 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
         for key in models:
             Ms[key] = remove_outlier(Ms[key])
 
-        measured = import_filter_measured(
-            "data/MsDatabase_2022_complete.csv", e1, e2, 0.2, df, study["ref"]
+        measured, diff, hover_text = import_filter_measured(
+            "data/MsDatabase_2022_complete.csv", e1, e2, threshold_measured_data_display, df, study["ref"]
         )
 
         X, Y = np.meshgrid(e1_rng, e2_rng)
@@ -428,14 +450,21 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None):
 
         fig.add_trace(
             go.Scatter3d(
-                x=measured[e1["element"]],
-                y=measured[e2["element"]],
-                z=measured["Ms"],
-                mode="markers",
-                name="Measured data",
-                showlegend=(sx == 0),
-                marker=dict(size=8, color="black"),
-                legendgroup="legend_data",
+            x=measured[e1["element"]],
+            y=measured[e2["element"]],
+            z=measured["Ms"],
+            mode="markers",
+            name="Measured data",
+            showlegend=(sx == 0),
+            marker=dict(
+                size=8, 
+                color=diff.values,
+                colorscale="gray", 
+                reversescale=False,
+            ),
+            hoverinfo="text",
+            text=hover_text,
+            legendgroup="legend_data",
             ),
             row=1,
             col=sx + 1,
