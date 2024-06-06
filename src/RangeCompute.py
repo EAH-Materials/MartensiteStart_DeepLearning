@@ -6,7 +6,7 @@ from concurrent.futures import as_completed, ProcessPoolExecutor
 from multiprocessing import cpu_count
 
 from src.DeployModel import DeployModel
-from src.utilities_steel import Ms_Ingber
+from src.utilities_steel import Ms_Ingber, Agrawal
 from src.MS_Pycalphad import ms_Calphad as Ms_Calphad
 
 import plotly.graph_objects as go
@@ -118,6 +118,7 @@ shortcut_to_long = {
     "EM": "Empirical (Ingber)",
     "NN": "Neural Network",
     "TD": "Thermodynamic",
+    "AG": "Agrawal et al."
 }
 
 
@@ -176,7 +177,7 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None, thre
         )
 
     fig = make_subplots(rows=1, cols=len(studies))
-    colors = ["#ff7f0e", "#1f77b4", "#2ca02c"]
+    colors = ["#ff7f0e", "#1f77b4", "#2ca02c", "#4a6528"]
 
     for sx, study in enumerate(studies):
         e1 = study["e1"]
@@ -205,6 +206,9 @@ def range_study_1D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None, thre
             if "EM" in models:
                 futures["futures"].append(pool.submit(Ms_Ingber, **composition_dict))
                 futures["keys"].append("EM")
+            if "AG" in models:
+                futures["futures"].append(pool.submit(Agrawal, **composition_dict))
+                futures["keys"].append("AG")
 
         for _ in as_completed(futures["futures"]):
             prog.update(1)
@@ -349,7 +353,7 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None, thre
         cols=len(studies),
         specs=[[{"is_3d": True} for _ in range(len(studies))]],
     )
-    colorscale = ["#ff7f0e", "#1f77b4", "#2ca02c"]
+    colorscale = ["#ff7f0e", "#1f77b4", "#2ca02c", "#4a6528"]
 
     for sx, study in enumerate(studies):
         e1 = study["e1"]
@@ -388,6 +392,11 @@ def range_study_2D(studies, models=["NN", "EM", "TD"], df=None, Ms_ML=None, thre
                         pool.submit(Ms_Ingber, **composition_dict)
                     )
                     futures["keys"].append("EM")
+                if "AG" in models:
+                    futures["futures"].append(
+                        pool.submit(Agrawal, **composition_dict)
+                    )
+                    futures["keys"].append("AG")
 
         for _ in as_completed(futures["futures"]):
             prog.update(1)
