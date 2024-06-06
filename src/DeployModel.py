@@ -56,20 +56,30 @@ class DeployModel(LightningModule):
             nn.LeakyReLU(),
         )
 
-        dropout = config["layer1_dropout"]
-        self.encoder.append(nn.Dropout(dropout))
+        if "layer1_dropout" in config and config["layer1_dropout"] > 0:
+            dropout = config["layer1_dropout"]
+            self.encoder.append(nn.Dropout(dropout))
+        else:
+            self.encoder.append(nn.BatchNorm1d(last_out_size))
 
         for layer_index in range(2, int(config["layer_count"])+1):
             next_out_size = config[f"layer{layer_index}_output"]
             self.encoder.append(nn.Linear(last_out_size, next_out_size))
             self.encoder.append(nn.LeakyReLU())
-            dropout = config[f"layer{layer_index}_dropout"]
-            self.encoder.append(nn.Dropout(dropout))
+
+            if f"layer{layer_index}_dropout" in config and config[f"layer{layer_index}_dropout"] > 0:
+                dropout = config[f"layer{layer_index}_dropout"]
+                self.encoder.append(nn.Dropout(dropout))
+            else:
+                self.encoder.append(nn.BatchNorm1d(next_out_size))
+
             last_out_size = next_out_size
 
         self.encoder.append(nn.Linear(last_out_size, 1))
     
     def forward(self, x):
+        if len(x.shape) == 1:
+            x = x.unsqueeze(dim=0)
         return self.encoder(x)
     
     # Inference methods
