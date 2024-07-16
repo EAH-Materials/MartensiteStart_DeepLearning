@@ -31,7 +31,7 @@ if __name__ == "__main__":
             "ref": composition_dict,
         },
     ]
-    fig = range_study_1D(studies, models=["NN", "EM", "TD"], Ms_ML=model)
+    fig = range_study_1D(studies, models=["NN", "EM", "TD", "AG"], Ms_ML=model)
     fig.show()
     # fig.write_html("plot_1D.html")
 
@@ -51,6 +51,6 @@ if __name__ == "__main__":
             "e2": {"element": "V", "min": 0.0, "max": 5.0, "sample_points": 16},
         },
     ]
-    fig = range_study_2D(studies, models=["NN", "EM", "TD"], Ms_ML=model)
+    fig = range_study_2D(studies, models=["NN", "EM", "TD", "AG"], Ms_ML=model)
     fig.show()
     # fig.write_html("plot_2D.html")

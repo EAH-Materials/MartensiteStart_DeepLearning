@@ -1,4 +1,5 @@
 from math import exp
+import requests as req
 
 try:
     from pycalphad import variables as v
@@ -201,3 +202,25 @@ def Ms_Ingber(**kwargs):
         )
         + 273.15
     )
+
+def Agrawal(**kwargs):
+    inputs = {k.upper(): v for k, v in kwargs.items()}
+    C = inputs.get("C", 0.0)
+    Mn = inputs.get("MN", 0.0)
+    Si = inputs.get("SI", 0.0)
+    Cr = inputs.get("CR", 0.0)
+    Mo = inputs.get("MO", 0.0)
+    V = inputs.get("V", 0.0)
+    Ni = inputs.get("NI", 0.0)
+    Al = inputs.get("AL", 0.0)
+    Co = inputs.get("CO", 0.0)
+    W = inputs.get("W", 0.0)
+    Cu = inputs.get("CU", 0.0)
+    Nb = inputs.get("NB", 0.0)
+    Ti = inputs.get("TI", 0.0)
+    B = inputs.get("B", 0.0)
+    N = inputs.get("N", 0.0)
+
+    url = f"http://info.eecs.northwestern.edu/MsTpredictor/submitReduced?C={C}&Mn={Mn}&Si={Si}&Cr={Cr}&Ni={Ni}&Mo={Mo}&V={V}&Co={Co}&Al={Al}&W={W}&Cu={Cu}&Nb={Nb}&Ti={Ti}&B={B}&N={N}"
+    resp = req.get(url)
+    return resp.json()["avg"]
