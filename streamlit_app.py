@@ -37,7 +37,7 @@ def get_inputs(element):
     col1, col2, col3 = st.columns(3)
     with col1:
         c = element("Carbon (C)", 0.0, 2.25, 0.0, )
-        mn = element("Manganese (Mn)", 0.0, 10.24, 0.0, help="Critical List EU :x: US:white_check_mark:. EC HHI: 0.8, SG HHI: 0.773, Price Volatility: 52.4%")
+        mn = element("Manganese (Mn)", 0.0, 10.24, 0.0)
         si = element("Silicon (Si)", 0.0, 3.8, 0.0)
         cr = element("Chromium (Cr)", 0.0, 17.98, 0.0)
         ni = element("Nickel (Ni)", 0.0, 31.54, 0.0)
@@ -133,8 +133,8 @@ def print_result(predictions):
             if value >= 0.0:
                 st.metric(
                     f"MsT_{suffix}",
-                    f"{value:5.2f} K / {(value-273.15):5.2f} °C",
-                    delta=f"{delta:5.2f} K/°C",
+                    f"{value:5.2f} K | {(value-273.15):5.2f} °C",
+                    delta=f"{delta:5.2f} K|°C",
                     label_visibility="hidden",
                 )
                 st.write("compared to previous calculation")
@@ -148,30 +148,29 @@ def print_result(predictions):
     cols_NN, col_EM, col_TD, col_LO = st.columns(4)
     with cols_NN:
         __print_func__(predictions[0], "NN", "Artificial Neural Network:")
-        with st.expander("ⓘ"):
+        with st.expander("ⓘ Expand for Details"):
             st.markdown(
-                "[Paper will be published shortly] This [artificial neural network](https://github.com/EAH-Materials/MartensiteStart_DeepLearning) had been trained on 1,500 records of experimental data, $M_s$ ranging from -123 °C to 790 °C. Be aware, the model does not know about physical limitations and may thus predict a temperature lower than 0 K or differ by a lot from the other models for alloys that are not well represented in our training data."
+                "[[Paper](https://doi.org/10.1002/srin.202400210) | [Code](https://github.com/EAH-Materials/MartensiteStart_DeepLearning)] This artificial neural network had been trained on 1,500 records of experimental data, $M_s$ ranging from -123 °C to 790 °C. Be aware, the model does not know about physical limitations and may thus predict a temperature lower than 0 K or differ by a lot from the other models for alloys that are not well represented in our training data."
             )
     with col_EM:
         __print_func__(predictions[1], "EM", "Empirical Model:")
-        with st.expander("ⓘ"):
+        with st.expander("ⓘ Expand for Details"):
             st.markdown(
                 "This [empirical model](https://onlinelibrary.wiley.com/doi/full/10.1002/srin.202100576) estimates the martensite start temperature as a function of chemical composition. It is developed and optimized for high-carbon steels with a $M_s$ range between 0 and 50 °C. It is based on the mean value of several empirical models from the literature. Click ?-symbol on right for the exact formular.",
                 help="$M_{\\text{s}}=\\frac{1}{8}\\left\\{4241.9-2322.27x_{\\text{C}}-284x_{\\text{Mn}}- \n 54.4x_{\\text{Si}}-166.4x_{\\text{Cr}}-137.4x_{\\text{Ni}}-83.5x_{\\text{Mo}}-30x_{\\text{Al}}+38.58x_{\\text{Co}}-600 \\lbrack 1-exp(-0.96x_{\\text{C}}) \\rbrack \\right\\}$",
             )
     with col_TD:
         __print_func__(predictions[2], "TD", "Thermodynamic Model:")
-        with st.expander("ⓘ"):
+        with st.expander("ⓘ Expand for Details"):
             st.markdown(
                 "This model uses [pyCALPHAD](https://pycalphad.org/) to compute Gibbs energies for Austenite and Martensite over a large temperature range and the [Ghosh-Olson model](https://link.springer.com/article/10.1361/105497101770338653) to compute the driving force for martensitic transformation $Δ_G$."
             )
             st.image("imgs/Gibbs_vs_T.png")
     with col_LO:
         __print_func__(predictions[3], "LO", "Data Sample representation:")
-        with st.expander("ⓘ"):
+        with st.expander("ⓘ Expand for Details"):
             st.markdown(
                 "Local Outlier Factor [LOF](https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf) is used to represent the Input Data Sample compared to the Dataset. \n The local outlier factor is based on a concept of a local density, where locality is given by k nearest neighbors, whose distance is used to estimate the density. By comparing the local density of an object to the local densities of its neighbors, one can identify regions of similar density, and points that have a substantially lower density than their neighbors. \n LOF is defined between 0 and ∞, while 1 means that the local density of an object is equal to the local densities of its neighbors. Data Samples with a low LOF value are well represented by the Dataset, while those with a high LOF value are not. "
-                
             )
 
 if __name__ == "__main__":
@@ -348,7 +347,7 @@ if __name__ == "__main__":
     with info_tab:
         st.subheader("Availability & further Information:")
         st.markdown(
-            "Details on the used Deep Learning Model can be found in Paper: TODO"
+            "Details on the used Deep Learning Model can be found in our Paper [Machine Learning-Based Prediction of the Martensite Start Temperature](https://doi.org/10.1002/srin.202400210)"
         )
         st.markdown(
             "This website and the deep learning model are open-source and published under [GNU GPLv3](https://github.com/EAH-Materials/MartensiteStart_DeepLearning/blob/main/LICENSE) on GitHub: [https://github.com/EAH-Materials/MartensiteStart_DeepLearning](https://github.com/EAH-Materials/MartensiteStart_DeepLearning).",
@@ -361,6 +360,6 @@ if __name__ == "__main__":
 
     st.divider()
     st.markdown(
-        "[Imprint (Impressum)](https://www.eah-jena.de/impressum) (Forwards to the website of the University of Applied Sciences Jena in new tab)"
+        "[Imprint (Impressum)](https://www.eah-jena.de/impressum) (Forwards to the website of the University of Applied Sciences Jena in a new tab)"
     )
     st.markdown(disclaimer)
